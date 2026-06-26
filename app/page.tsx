@@ -7,8 +7,21 @@ import BossTab from "./components/BossTab";
 import StatTab from "./components/StatTab";
 import Dashboard from "./components/Dashboard";
 import CharacterHeader from "./components/CharacterHeader";
+import EquipTab from "./components/EquipTab";
+import UnionTab from "./components/UnionTab";
+import ArtifactTab from "./components/ArtifactTab";
+import HexaTab from "./components/HexaTab";
+import AccountTab from "./components/AccountTab";
 
-type Tab = "dashboard" | "stat" | "boss" | "equip" | "union" | "artifact" | "hexa";
+type Tab =
+  | "dashboard"
+  | "account"
+  | "stat"
+  | "boss"
+  | "equip"
+  | "union"
+  | "artifact"
+  | "hexa";
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -17,6 +30,7 @@ export default function Home() {
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
   const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [tab, setTab] = useState<Tab>("dashboard");
 
   const basic = result?.basic;
@@ -27,104 +41,111 @@ export default function Home() {
   const hexa = result?.hexa;
   const hexaCores = hexa?.character_hexa_core_equipment ?? [];
 
-  useEffect(() => {
-    const saved = localStorage.getItem("favorite-characters");
-    if (saved) setFavorites(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-  if (!basic?.character_name) return;
-
-  localStorage.setItem(
-    `boss-${basic.character_name}`,
-    JSON.stringify(checkedBosses)
-  );
-
-  localStorage.setItem(
-    `boss-party-${basic.character_name}`,
-    JSON.stringify(bossPartySize)
-  );
-}, [checkedBosses, bossPartySize, basic?.character_name]);
-
- async function search(targetName?: string) {
-  const searchName = targetName ?? name;
-  if (!searchName) return;
-
-  setLoading(true);
-  setResult(null);
-  setTab("dashboard");
-
-  try {
-    const res = await fetch(
-      `/api/character?name=${encodeURIComponent(searchName)}`
-    );
-    const data = await res.json();
-
-    setName(searchName);
-    setResult(data);
-
-    const saved = localStorage.getItem(`boss-${searchName}`);
-    setCheckedBosses(saved ? JSON.parse(saved) : []);
-
-    const savedParty = localStorage.getItem(`boss-party-${searchName}`);
-    setBossPartySize(savedParty ? JSON.parse(savedParty) : {});
-  } catch {
-    alert("조회 실패");
+useEffect(() => {
+  const savedFavorites = localStorage.getItem("favorite-characters");
+  if (savedFavorites) {
+    setFavorites(JSON.parse(savedFavorites));
   }
 
-  setLoading(false);
-}
+  const savedRecent = localStorage.getItem("recent-searches");
+  if (savedRecent) {
+    setRecentSearches(JSON.parse(savedRecent));
+  }
+
+  const lastName = localStorage.getItem("last-character-name");
+  if (lastName) {
+    search(lastName);
+  }
+}, []);
+
+  useEffect(() => {
+    if (!basic?.character_name) return;
+
+    localStorage.setItem(
+      `boss-${basic.character_name}`,
+      JSON.stringify(checkedBosses)
+    );
+
+    localStorage.setItem(
+      `boss-party-${basic.character_name}`,
+      JSON.stringify(bossPartySize)
+    );
+  }, [checkedBosses, bossPartySize, basic?.character_name]);
+
+  async function search(targetName?: string) {
+    const searchName = targetName ?? name;
+    if (!searchName) return;
+
+    setLoading(true);
+    setResult(null);
+    setTab("dashboard");
+
+    try {
+      const res = await fetch(
+        `/api/character?name=${encodeURIComponent(searchName)}`
+      );
+      const data = await res.json();
+
+    setName(searchName);
+localStorage.setItem("last-character-name", searchName);
+
+const updatedRecent = [
+  searchName,
+  ...recentSearches.filter((x) => x !== searchName),
+].slice(0, 10);
+
+setRecentSearches(updatedRecent);
+localStorage.setItem("recent-searches", JSON.stringify(updatedRecent));
+
+setResult(data);
+
+      const saved = localStorage.getItem(`boss-${searchName}`);
+      setCheckedBosses(saved ? JSON.parse(saved) : []);
+
+      const savedParty = localStorage.getItem(`boss-party-${searchName}`);
+      setBossPartySize(savedParty ? JSON.parse(savedParty) : {});
+    } catch {
+      alert("조회 실패");
+    }
+
+    setLoading(false);
+  }
 
   function getStat(statName: string) {
     return stats.find((s: any) => s.stat_name === statName)?.stat_value ?? "-";
   }
 
-  function getBossTotal(bossNames: string[]) {
-    return bossList
-      .filter((boss) => bossNames.includes(boss.name))
-      .reduce((sum, boss) => sum + boss.price, 0);
+  function getCharacterBossTotal(characterName: string) {
+    const saved = localStorage.getItem(`boss-${characterName}`);
+    const bosses = saved ? JSON.parse(saved) : [];
+
+    const savedParty = localStorage.getItem(`boss-party-${characterName}`);
+    const partyData = savedParty ? JSON.parse(savedParty) : {};
+
+    return bosses.reduce((sum: number, bossName: string) => {
+      const boss = bossList.find((b) => b.name === bossName);
+      if (!boss) return sum;
+
+      const party = partyData[bossName] ?? 1;
+      return sum + Math.floor(boss.price / party);
+    }, 0);
   }
 
-function getCharacterBossTotal(characterName: string) {
-  const saved = localStorage.getItem(`boss-${characterName}`);
-  const bosses = saved ? JSON.parse(saved) : [];
+  function getCharacterBossCount(characterName: string) {
+    const saved = localStorage.getItem(`boss-${characterName}`);
+    const bosses = saved ? JSON.parse(saved) : [];
 
-  const savedParty = localStorage.getItem(
-    `boss-party-${characterName}`
-  );
-
-  const partyData = savedParty
-    ? JSON.parse(savedParty)
-    : {};
-
-  return bosses.reduce((sum: number, bossName: string) => {
-    const boss = bossList.find(
-      (b) => b.name === bossName
-    );
-
-    if (!boss) return sum;
-
-    const party = partyData[bossName] ?? 1;
-
-    return sum + Math.floor(boss.price / party);
-  }, 0);
-}
-
-function getCharacterBossCount(characterName: string) {
-  const saved = localStorage.getItem(`boss-${characterName}`);
-  const bosses = saved ? JSON.parse(saved) : [];
-
-  return bosses.length;
-}
+    return bosses.length;
+  }
 
   const currentBossTotal = checkedBosses.reduce((sum, bossName) => {
-  const boss = bossList.find((b) => b.name === bossName);
-  if (!boss) return sum;
+    const boss = bossList.find((b) => b.name === bossName);
+    if (!boss) return sum;
 
-  const party = bossPartySize[bossName] ?? 1;
+    const party = bossPartySize[bossName] ?? 1;
+    return sum + Math.floor(boss.price / party);
+  }, 0);
 
-  return sum + Math.floor(boss.price / party);
-}, 0);
   const allFavoriteBossTotal = favorites.reduce(
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
     0
@@ -155,25 +176,51 @@ function getCharacterBossCount(characterName: string) {
     setCheckedBosses([]);
   }
 
-  function saveFavorite() {
-    if (!basic?.character_name) return;
+function saveFavorite() {
+  if (!basic?.character_name) return;
 
-    const updated = [
-      basic.character_name,
-      ...favorites.filter((x) => x !== basic.character_name),
-    ].slice(0, 36);
+  const updated = [
+    basic.character_name,
+    ...favorites.filter((x) => x !== basic.character_name),
+  ].slice(0, 36);
 
-    setFavorites(updated);
-    localStorage.setItem("favorite-characters", JSON.stringify(updated));
-  }
+  setFavorites(updated);
+  localStorage.setItem("favorite-characters", JSON.stringify(updated));
+}
 
-  function removeFavorite(target: string) {
-    const updated = favorites.filter((x) => x !== target);
-    setFavorites(updated);
-    localStorage.setItem("favorite-characters", JSON.stringify(updated));
-  }
+function removeFavorite(characterName: string) {
+  if (!confirm(`${characterName} 캐릭터를 즐겨찾기에서 삭제할까?`)) return;
 
-  function gradeColor(grade: string) {
+  const updated = favorites.filter((x) => x !== characterName);
+
+  setFavorites(updated);
+  localStorage.setItem("favorite-characters", JSON.stringify(updated));
+}
+
+function moveFavorite(characterName: string, direction: "up" | "down") {
+  const index = favorites.indexOf(characterName);
+  if (index === -1) return;
+
+  const nextIndex = direction === "up" ? index - 1 : index + 1;
+  if (nextIndex < 0 || nextIndex >= favorites.length) return;
+
+  const updated = [...favorites];
+  [updated[index], updated[nextIndex]] = [updated[nextIndex], updated[index]];
+
+  setFavorites(updated);
+  localStorage.setItem("favorite-characters", JSON.stringify(updated));
+}
+
+function goHome() {
+  setName("");
+  setResult(null);
+  setLoading(false);
+  setTab("dashboard");
+
+  localStorage.removeItem("last-character-name");
+}
+
+function gradeColor(grade: string) {
     if (grade === "레전드리") return "#3ee7a8";
     if (grade === "유니크") return "#ffd166";
     if (grade === "에픽") return "#b388ff";
@@ -208,7 +255,7 @@ function getCharacterBossCount(characterName: string) {
           color: "white",
           border: active ? "1px solid #ff9b4a" : "1px solid #2a3140",
           borderRadius: 10,
-          padding: "12px 20px",
+          padding: "10px 18px",
           cursor: "pointer",
           fontWeight: active ? "bold" : "normal",
         }}
@@ -222,19 +269,48 @@ function getCharacterBossCount(characterName: string) {
     <main
       style={{
         background:
-  "radial-gradient(circle at top, #26324a 0%, #171d2a 38%, #0d111a 100%)",
+          "radial-gradient(circle at top, #26324a 0%, #171d2a 38%, #0d111a 100%)",
         minHeight: "100vh",
         color: "white",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: 70,
+        paddingTop: 35,
         paddingBottom: 80,
       }}
     >
-      <h1 style={{ fontSize: 34, marginBottom: 28 }}>
-        🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁 🍁
-      </h1>
+<div
+  onClick={goHome}
+  style={{
+    textAlign: "center",
+    marginBottom: 28,
+    cursor: "pointer",
+    userSelect: "none",
+  }}
+>
+  <div
+    style={{
+      fontSize: 38,
+      fontWeight: 900,
+      color: "#ffb347",
+      letterSpacing: "-1px",
+      textShadow: "0 0 18px rgba(255,180,71,.25)",
+    }}
+  >
+    🍁 Maple Crystal Manager
+  </div>
+
+  <div
+    style={{
+      marginTop: 6,
+      color: "#9ea7b8",
+      fontSize: 15,
+      letterSpacing: "1px",
+    }}
+  >
+    Weekly Boss & Crystal Dashboard
+  </div>
+</div>
 
       <div style={{ display: "flex", gap: 10 }}>
         <input
@@ -245,7 +321,7 @@ function getCharacterBossCount(characterName: string) {
           }}
           placeholder="캐릭터명 입력"
           style={{
-            width: 280,
+            width: 420,
             padding: 14,
             background: "#1d2330",
             color: "white",
@@ -265,73 +341,64 @@ function getCharacterBossCount(characterName: string) {
             padding: "14px 22px",
             fontSize: 16,
             cursor: "pointer",
+            fontWeight: "bold",
           }}
         >
           검색
         </button>
       </div>
+{recentSearches.length > 0 && (
+  <div
+    style={{
+      marginTop: 12,
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap",
+      justifyContent: "center",
+      maxWidth: 720,
+    }}
+  >
+    <span style={{ color: "#aaa", fontSize: 13, alignSelf: "center" }}>
+      최근조회
+    </span>
 
-      {favorites.length > 0 && (
-        <div
-          style={{
-            marginTop: 12,
-            background: "#181d26",
-            border: "1px solid #2a3140",
-            borderRadius: 16,
-            padding: 18,
-            width: 900,
-            textAlign: "center",
-          }}
-        >
-          <div style={{ color: "#aaa", marginBottom: 8 }}>주간 보스 총합</div>
+    {recentSearches.map((recent) => (
+      <button
+        key={recent}
+        onClick={() => search(recent)}
+        style={{
+          background: "#10141c",
+          color: "white",
+          border: "1px solid #2a3140",
+          borderRadius: 999,
+          padding: "6px 12px",
+          cursor: "pointer",
+          fontSize: 13,
+        }}
+      >
+        🍁 {recent}
+      </button>
+    ))}
 
-          <div
-            style={{
-              color: "#0099ff",
-              fontSize: 32,
-              fontWeight: "bold",
-              marginBottom: 8,
-            }}
-          >
-            {formatNumber(allFavoriteBossTotal)} 메소
-          </div>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            {favorites.map((fav) => (
-              <div key={fav} style={{ display: "flex", gap: 4 }}>
-                <button
-                  onClick={() => search(fav)}
-                  style={{
-                    background: "#202635",
-                    color: "white",
-                    border: "1px solid #444",
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  ⭐ {fav} / {formatNumber(getCharacterBossTotal(fav))} 메소
-                </button>
-
-                <button
-                  onClick={() => removeFavorite(fav)}
-                  style={{
-                    background: "#441d1d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "8px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  ❌
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+    <button
+      onClick={() => {
+        setRecentSearches([]);
+        localStorage.removeItem("recent-searches");
+      }}
+      style={{
+        background: "transparent",
+        color: "#888",
+        border: "1px solid #333",
+        borderRadius: 999,
+        padding: "6px 10px",
+        cursor: "pointer",
+        fontSize: 12,
+      }}
+    >
+      전체삭제
+    </button>
+  </div>
+)}
       {loading && <p style={{ marginTop: 30 }}>조회중...</p>}
 
       {basic && (
@@ -345,321 +412,60 @@ function getCharacterBossCount(characterName: string) {
             textAlign: "center",
           }}
         >
-<CharacterHeader
-  basic={basic}
-  saveFavorite={saveFavorite}
-  tabButton={tabButton}
+          <CharacterHeader
+            basic={basic}
+            saveFavorite={saveFavorite}
+            tabButton={tabButton}
+          />
+
+          {tab === "dashboard" && (
+            <Dashboard
+              characterName={basic.character_name}
+              currentBossTotal={currentBossTotal}
+              favorites={favorites}
+              allFavoriteBossTotal={allFavoriteBossTotal}
+              getCharacterBossTotal={getCharacterBossTotal}
+              getCharacterBossCount={getCharacterBossCount}
+              search={search}
+            />
+          )}
+
+{tab === "account" && (
+  <AccountTab
+  favorites={favorites}
+  currentCharacter={basic.character_name}
+  getCharacterBossTotal={getCharacterBossTotal}
+  getCharacterBossCount={getCharacterBossCount}
+  search={search}
+  removeFavorite={removeFavorite}
+  moveFavorite={moveFavorite}
 />
-{tab === "dashboard" && (
-  <Dashboard
-    characterName={basic.character_name}
-    currentBossTotal={currentBossTotal}
-    favorites={favorites}
-    allFavoriteBossTotal={allFavoriteBossTotal}
-    getCharacterBossTotal={getCharacterBossTotal}
-    getCharacterBossCount={getCharacterBossCount}
-    search={search}
-  />
 )}
 
-{tab === "stat" && (
-  <StatTab
-    getStat={getStat}
-  />
-)}
+          {tab === "stat" && <StatTab getStat={getStat} />}
 
           {tab === "boss" && (
-          <BossTab
-  checkedBosses={checkedBosses}
-  setCheckedBosses={setCheckedBosses}
-  bossPartySize={bossPartySize}
-  setBossPartySize={setBossPartySize}
-  currentBossTotal={currentBossTotal}
-  toggleBoss={toggleBoss}
-  toggleBossGroup={toggleBossGroup}
-  resetBosses={resetBosses}
-/>
+            <BossTab
+              checkedBosses={checkedBosses}
+              setCheckedBosses={setCheckedBosses}
+              bossPartySize={bossPartySize}
+              setBossPartySize={setBossPartySize}
+              currentBossTotal={currentBossTotal}
+              toggleBoss={toggleBoss}
+              toggleBossGroup={toggleBossGroup}
+              resetBosses={resetBosses}
+            />
           )}
 
-          {tab === "union" && (
-            <div>
-              <h3 style={{ fontSize: 22, marginBottom: 20 }}>유니온</h3>
+{tab === "union" && <UnionTab union={union} />}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-                <div style={{ background: "#10141c", padding: 20, borderRadius: 14, border: "1px solid #2a3140" }}>
-                  <div style={{ color: "#aaa", fontSize: 13 }}>유니온 레벨</div>
-                  <div style={{ fontSize: 34, fontWeight: "bold", marginTop: 8, color: "#3ee7a8" }}>
-                    {formatNumber(union?.union_level ?? "-")}
-                  </div>
-                </div>
+{tab === "artifact" && (
+  <ArtifactTab artifact={artifact} />
+)}
 
-                <div style={{ background: "#10141c", padding: 20, borderRadius: 14, border: "1px solid #2a3140" }}>
-                  <div style={{ color: "#aaa", fontSize: 13 }}>유니온 등급</div>
-                  <div style={{ fontSize: 28, fontWeight: "bold", marginTop: 8 }}>
-                    {union?.union_grade ?? "-"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+{tab === "hexa" && <HexaTab hexaCores={hexaCores} />}
 
-          {tab === "artifact" && (
-            <div>
-              <h3 style={{ fontSize: 22, marginBottom: 20 }}>아티팩트</h3>
-
-              <div
-                style={{
-                  background: "#10141c",
-                  padding: 20,
-                  borderRadius: 14,
-                  border: "1px solid #2a3140",
-                  marginBottom: 20,
-                }}
-              >
-                <div style={{ color: "#aaa", fontSize: 13 }}>남은 AP</div>
-                <div style={{ fontSize: 34, fontWeight: "bold", marginTop: 8, color: "#ffb347" }}>
-                  {artifact?.union_artifact_remain_ap ?? "-"}
-                </div>
-              </div>
-
-              <h4 style={{ fontSize: 18, marginBottom: 12 }}>아티팩트 효과</h4>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, textAlign: "left" }}>
-                {(artifact?.union_artifact_effect ?? []).map((effect: any, index: number) => (
-                  <div
-                    key={index}
-                    style={{
-                      background: "#10141c",
-                      border: "1px solid #2a3140",
-                      borderRadius: 12,
-                      padding: 14,
-                    }}
-                  >
-                    <div style={{ fontWeight: "bold" }}>{effect.name}</div>
-                    <div style={{ color: "#3ee7a8", marginTop: 4 }}>
-                      Lv.{effect.level}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <h4 style={{ fontSize: 18, marginTop: 24, marginBottom: 12 }}>크리스탈</h4>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, textAlign: "left" }}>
-                {(artifact?.union_artifact_crystal ?? []).map((crystal: any, index: number) => (
-                  <div
-                    key={index}
-                    style={{
-                      background: "#10141c",
-                      border: "1px solid #2a3140",
-                      borderRadius: 12,
-                      padding: 14,
-                    }}
-                  >
-                    <div style={{ fontWeight: "bold" }}>{crystal.name}</div>
-                    <div style={{ color: "#ffb347", marginTop: 4 }}>
-                      Lv.{crystal.level}
-                    </div>
-                    <div style={{ marginTop: 8, color: "#ccc", fontSize: 13 }}>
-                      {crystal.crystal_option_name_1 && <div>{crystal.crystal_option_name_1}</div>}
-                      {crystal.crystal_option_name_2 && <div>{crystal.crystal_option_name_2}</div>}
-                      {crystal.crystal_option_name_3 && <div>{crystal.crystal_option_name_3}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {tab === "hexa" && (
-            <div>
-              <h3 style={{ fontSize: 22, marginBottom: 20 }}>헥사</h3>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 12,
-                  textAlign: "left",
-                }}
-              >
-                {hexaCores.length === 0 && (
-                  <div
-                    style={{
-                      background: "#10141c",
-                      border: "1px solid #2a3140",
-                      borderRadius: 12,
-                      padding: 18,
-                      gridColumn: "1 / 3",
-                      textAlign: "center",
-                      color: "#aaa",
-                    }}
-                  >
-                    헥사 코어 정보가 없거나 6차 전직 전 캐릭터야.
-                  </div>
-                )}
-
-                {hexaCores.map((core: any, index: number) => (
-                  <div
-                    key={index}
-                    style={{
-                      background: "#10141c",
-                      border: "1px solid #2a3140",
-                      borderRadius: 12,
-                      padding: 14,
-                    }}
-                  >
-                    <div style={{ color: "#ffb86b", fontSize: 13 }}>
-                      {core.hexa_core_type}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: 17,
-                        fontWeight: "bold",
-                        marginTop: 6,
-                      }}
-                    >
-                      {core.hexa_core_name}
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#3ee7a8",
-                        marginTop: 8,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Lv.{core.hexa_core_level}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {tab === "equip" && (
-            <div>
-              <h3 style={{ fontSize: 22 }}>장비</h3>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 14,
-                  marginTop: 20,
-                  textAlign: "left",
-                }}
-              >
-                {equips.map((item: any) => {
-                  const potentials = potentialLines(item);
-                  const addPotentials = additionalLines(item);
-
-                  return (
-                    <div
-                      key={item.item_equipment_slot}
-                      style={{
-                        background: "#10141c",
-                        padding: 8,
-                        borderRadius: 14,
-                        border: "1px solid #2a3140",
-                        minHeight: 170,
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        {item.item_icon && (
-                          <img
-                            src={item.item_icon}
-                            width={50}
-                            height={50}
-                            style={{
-                              background: "#222",
-                              borderRadius: 8,
-                              padding: 4,
-                            }}
-                          />
-                        )}
-
-                        <div>
-                          <div style={{ color: "#ffb86b", fontSize: 13, marginBottom: 4 }}>
-                            {item.item_equipment_slot}
-                          </div>
-
-                          <div style={{ fontWeight: "bold", fontSize: 15 }}>
-                            {item.item_name}
-                          </div>
-
-                          {item.starforce && (
-                            <div style={{ marginTop: 4, color: "#ffd166", fontSize: 13 }}>
-                              ★ {item.starforce}성
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {item.potential_option_grade && (
-                        <div
-                          style={{
-                            marginTop: 12,
-                            padding: 10,
-                            background: "#151b25",
-                            borderRadius: 10,
-                            borderLeft: `5px solid ${gradeColor(item.potential_option_grade)}`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              color: gradeColor(item.potential_option_grade),
-                              fontSize: 13,
-                              fontWeight: "bold",
-                              marginBottom: 5,
-                            }}
-                          >
-                            잠재 : {item.potential_option_grade}
-                          </div>
-
-                          {potentials.map((line: string, index: number) => (
-                            <div key={index} style={{ fontSize: 13 }}>
-                              {line}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {item.additional_potential_option_grade && (
-                        <div
-                          style={{
-                            marginTop: 8,
-                            padding: 10,
-                            background: "#151b25",
-                            borderRadius: 10,
-                            borderLeft: `5px solid ${gradeColor(item.additional_potential_option_grade)}`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              color: gradeColor(item.additional_potential_option_grade),
-                              fontSize: 13,
-                              fontWeight: "bold",
-                              marginBottom: 5,
-                            }}
-                          >
-                            에디 : {item.additional_potential_option_grade}
-                          </div>
-
-                          {addPotentials.map((line: string, index: number) => (
-                            <div key={index} style={{ fontSize: 13 }}>
-                              {line}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+{tab === "equip" && <EquipTab equips={equips} />}
         </div>
       )}
     </main>

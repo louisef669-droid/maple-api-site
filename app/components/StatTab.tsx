@@ -6,17 +6,22 @@ type StatTabProps = {
   getStat: (statName: string) => any;
 };
 
+function safeNumber(value: any) {
+  if (value === undefined || value === null || value === "-") return "-";
+  return formatNumber(value);
+}
+
 export default function StatTab({ getStat }: StatTabProps) {
   const statItems = [
-    ["전투력", formatNumber(getStat("전투력"))],
-    ["STR", formatNumber(getStat("STR"))],
-    ["DEX", formatNumber(getStat("DEX"))],
-    ["INT", formatNumber(getStat("INT"))],
-    ["LUK", formatNumber(getStat("LUK"))],
-    ["보공", `${formatNumber(getStat("보스 몬스터 데미지"))}%`],
-    ["방무", `${formatNumber(getStat("몬스터 방어율 무시"))}%`],
-    ["크확", `${formatNumber(getStat("크리티컬 확률"))}%`],
-    ["크뎀", `${formatNumber(getStat("크리티컬 데미지"))}%`],
+    ["전투력", safeNumber(getStat("전투력"))],
+    ["STR", safeNumber(getStat("STR"))],
+    ["DEX", safeNumber(getStat("DEX"))],
+    ["INT", safeNumber(getStat("INT"))],
+    ["LUK", safeNumber(getStat("LUK"))],
+    ["보공", `${safeNumber(getStat("보스 몬스터 데미지"))}%`],
+    ["방무", `${safeNumber(getStat("몬스터 방어율 무시"))}%`],
+    ["크확", `${safeNumber(getStat("크리티컬 확률"))}%`],
+    ["크뎀", `${safeNumber(getStat("크리티컬 데미지"))}%`],
   ];
 
   return (
