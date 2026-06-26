@@ -247,6 +247,7 @@ export default function BossTab({
               {card.variants.length > 1 ? (
                 <select
                   value={selectedBoss.name}
+                    translate="no"
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => changeDifficulty(card, e.target.value)}
                   style={{
@@ -293,10 +294,16 @@ export default function BossTab({
                   ◀
                 </button>
 
-                <div style={{ color: "#ffb86b", fontSize: 15, fontWeight: "bold" }}>
-                  👥 {party}인
-                </div>
-
+<div
+  translate="no"
+  style={{
+    color: "#ffb86b",
+    fontSize: 15,
+    fontWeight: "bold",
+  }}
+>
+  👥 {party}P
+</div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
