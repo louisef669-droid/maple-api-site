@@ -6,6 +6,7 @@ import { formatNumber } from "../lib/format";
 import BossTab from "./components/BossTab";
 import StatTab from "./components/StatTab";
 import Dashboard from "./components/Dashboard";
+import CharacterHeader from "./components/CharacterHeader";
 
 type Tab = "dashboard" | "stat" | "boss" | "equip" | "union" | "artifact" | "hexa";
 
@@ -32,19 +33,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!basic?.character_name) return;
-    localStorage.setItem(
-      `boss-${basic.character_name}`,
-      JSON.stringify(checkedBosses)
-    );
-    const savedParty = localStorage.getItem(
-  `boss-party-${basic.character_name}`
-);
-    localStorage.setItem(
-  `boss-party-${basic.character_name}`,
-  JSON.stringify(bossPartySize)
-);
-  }, [checkedBosses, basic?.character_name]);
+  if (!basic?.character_name) return;
+
+  localStorage.setItem(
+    `boss-${basic.character_name}`,
+    JSON.stringify(checkedBosses)
+  );
+
+  localStorage.setItem(
+    `boss-party-${basic.character_name}`,
+    JSON.stringify(bossPartySize)
+  );
+}, [checkedBosses, bossPartySize, basic?.character_name]);
 
  async function search(targetName?: string) {
   const searchName = targetName ?? name;
@@ -85,13 +85,46 @@ export default function Home() {
       .reduce((sum, boss) => sum + boss.price, 0);
   }
 
-  function getCharacterBossTotal(characterName: string) {
-    const saved = localStorage.getItem(`boss-${characterName}`);
-    const bosses = saved ? JSON.parse(saved) : [];
-    return getBossTotal(bosses);
-  }
+function getCharacterBossTotal(characterName: string) {
+  const saved = localStorage.getItem(`boss-${characterName}`);
+  const bosses = saved ? JSON.parse(saved) : [];
 
-  const currentBossTotal = getBossTotal(checkedBosses);
+  const savedParty = localStorage.getItem(
+    `boss-party-${characterName}`
+  );
+
+  const partyData = savedParty
+    ? JSON.parse(savedParty)
+    : {};
+
+  return bosses.reduce((sum: number, bossName: string) => {
+    const boss = bossList.find(
+      (b) => b.name === bossName
+    );
+
+    if (!boss) return sum;
+
+    const party = partyData[bossName] ?? 1;
+
+    return sum + Math.floor(boss.price / party);
+  }, 0);
+}
+
+function getCharacterBossCount(characterName: string) {
+  const saved = localStorage.getItem(`boss-${characterName}`);
+  const bosses = saved ? JSON.parse(saved) : [];
+
+  return bosses.length;
+}
+
+  const currentBossTotal = checkedBosses.reduce((sum, bossName) => {
+  const boss = bossList.find((b) => b.name === bossName);
+  if (!boss) return sum;
+
+  const party = bossPartySize[bossName] ?? 1;
+
+  return sum + Math.floor(boss.price / party);
+}, 0);
   const allFavoriteBossTotal = favorites.reduce(
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
     0
@@ -188,7 +221,8 @@ export default function Home() {
   return (
     <main
       style={{
-        background: "#0f1115",
+        background:
+  "radial-gradient(circle at top, #26324a 0%, #171d2a 38%, #0d111a 100%)",
         minHeight: "100vh",
         color: "white",
         display: "flex",
@@ -240,11 +274,11 @@ export default function Home() {
       {favorites.length > 0 && (
         <div
           style={{
-            marginTop: 18,
+            marginTop: 12,
             background: "#181d26",
             border: "1px solid #2a3140",
             borderRadius: 16,
-            padding: 16,
+            padding: 18,
             width: 900,
             textAlign: "center",
           }}
@@ -256,7 +290,7 @@ export default function Home() {
               color: "#0099ff",
               fontSize: 32,
               fontWeight: "bold",
-              marginBottom: 14,
+              marginBottom: 8,
             }}
           >
             {formatNumber(allFavoriteBossTotal)} 메소
@@ -303,67 +337,19 @@ export default function Home() {
       {basic && (
         <div
           style={{
-            marginTop: 45,
+            marginTop: 20,
             background: "#181d26",
-            padding: 30,
+            padding: 20,
             borderRadius: 20,
-            width: 900,
+            width: 840,
             textAlign: "center",
           }}
         >
-          <img
-            src={basic.character_image}
-            width={320}
-            style={{
-              display: "block",
-              margin: "0 auto 14px",
-              imageRendering: "auto",
-              filter:
-                "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.18))",
-            }}
-          />
-
-          <h2 style={{ fontSize: 30, marginBottom: 10 }}>
-            {basic.character_name}
-          </h2>
-
-          <button
-            onClick={saveFavorite}
-            style={{
-              background: "#ffd166",
-              border: "none",
-              padding: "10px 14px",
-              borderRadius: 10,
-              cursor: "pointer",
-              marginBottom: 14,
-            }}
-          >
-            ⭐ 즐겨찾기 추가
-          </button>
-
-          <p>
-            Lv.{formatNumber(basic.character_level)} / {basic.character_class} /{" "}
-            {basic.world_name}
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 10,
-              marginTop: 25,
-              marginBottom: 25,
-              flexWrap: "wrap",
-            }}
-          >
-            {tabButton("dashboard", "대시보드")}
-            {tabButton("boss", "주간 보스")}
-            {tabButton("stat", "스탯")}
-            {tabButton("equip", "장비")}
-            {tabButton("union", "유니온")}
-            {tabButton("artifact", "아티팩트")}
-            {tabButton("hexa", "헥사")}
-          </div>
+<CharacterHeader
+  basic={basic}
+  saveFavorite={saveFavorite}
+  tabButton={tabButton}
+/>
 {tab === "dashboard" && (
   <Dashboard
     characterName={basic.character_name}
@@ -371,6 +357,7 @@ export default function Home() {
     favorites={favorites}
     allFavoriteBossTotal={allFavoriteBossTotal}
     getCharacterBossTotal={getCharacterBossTotal}
+    getCharacterBossCount={getCharacterBossCount}
     search={search}
   />
 )}
@@ -382,13 +369,16 @@ export default function Home() {
 )}
 
           {tab === "boss" && (
-            <BossTab
-              checkedBosses={checkedBosses}
-              currentBossTotal={currentBossTotal}
-              toggleBoss={toggleBoss}
-              toggleBossGroup={toggleBossGroup}
-              resetBosses={resetBosses}
-            />
+          <BossTab
+  checkedBosses={checkedBosses}
+  setCheckedBosses={setCheckedBosses}
+  bossPartySize={bossPartySize}
+  setBossPartySize={setBossPartySize}
+  currentBossTotal={currentBossTotal}
+  toggleBoss={toggleBoss}
+  toggleBossGroup={toggleBossGroup}
+  resetBosses={resetBosses}
+/>
           )}
 
           {tab === "union" && (
