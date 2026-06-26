@@ -1,78 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import bossList from "../data/bossPrice.json";
+import { formatNumber } from "../lib/format";
+import BossTab from "./components/BossTab";
+import StatTab from "./components/StatTab";
+import Dashboard from "./components/Dashboard";
 
-const bossList = [
-  { name: "카오스 자쿰", price: 810000 },
-  { name: "카오스 반반", price: 968000 },
-  { name: "카오스 피에르", price: 968000 },
-  { name: "카오스 블러디퀸", price: 968000 },
-  { name: "카오스 벨룸", price: 1250000 },
-  { name: "하드 매그너스", price: 1150000 },
-  { name: "카오스 파풀라투스", price: 1450000 },
-  { name: "노말 스우", price: 3390000 },
-  { name: "하드 스우", price: 3380000 },
-  { name: "익스우", price: 3380000 },
-  { name: "노말 데미안", price: 3380000 },
-  { name: "하드 데미안", price: 3380000 },
-  { name: "이지 루시드", price: 3510000 },
-  { name: "노말 루시드", price: 4060000 },
-  { name: "하드 루시드", price: 4650000 },
-  { name: "노말 가엔슬", price: 3380000 },
-  { name: "카오스 가엔슬", price: 3380000 },
-  { name: "이지 윌", price: 4960000 },
-  { name: "노말 윌", price: 5210000 },
-  { name: "하드 윌", price: 11800000 },
-  { name: "노말 더스크", price: 11200000 },
-  { name: "카오스 더스크", price: 11200000 },
-  { name: "노말 듄켈", price: 13500000 },
-  { name: "하드 듄켈", price: 14500000 },
-  { name: "노말 진힐라", price: 9000000 },
-  { name: "하드 진힐라", price: 14800000 },
-  { name: "검은 마법사", price: 50000000 },
-  { name: "노말 세렌", price: 19600000 },
-  { name: "하드 세렌", price: 3380000 },
-  { name: "이지 칼로스", price: 3380000 },
-  { name: "노말 칼로스", price: 30000000 },
-  { name: "이지 카링", price: 35000000 },
-  { name: "노말 카링", price: 3380000 },
-  { name: "이지 쌀숭", price: 3380000 },
-  { name: "노말 쌀숭", price: 3380000 },
-  { name: "노말 흉성", price: 3380000 },
-  { name: "림보", price: 40000000 },
-];
-const bossGroups = [
-  {
-    name: "카루타",
-    bosses: ["카오스 반반", "카오스 피에르", "카오스 블러디퀸", "카오스 벨룸"],
-  },
-  {
-    name: "스데루슬더",
-    bosses: ["노말 스우", "노말 데미안", "이지 루시드", "노말 가엔슬", "노말 더스크"],
-  },
-  {
-    name: "노진힐라인",
-    bosses: ["하드 스우", "하드 데미안", "노말 가엔슬", "노말 루시드", "노말 윌", "노말 더스크", "노말 듄켈", "노말 진힐라"],
-  },
-  {
-    name: "하드 검밑솔",
-    bosses: ["하드 스우", "하드 데미안", "카오스 가엔슬", "하드 루시드", "하드 윌", "카오스 더스크", "하드 듄켈", "하드 진힐라"],
-  },
-  {
-    name: "본캐",
-    bosses: ["익스우", "하드 데미안", "카오스 가엔슬", "하드 루시드", "하드 윌", "카오스 더스크", "하드 듄켈", "하드 진힐라", "하드 세렌", "노말 칼로스", "노말 쌀숭", "이지 카링"],
-  },
-];
-
-type Tab = "stat" | "boss" | "equip" | "union" | "artifact" | "hexa";
+type Tab = "dashboard" | "stat" | "boss" | "equip" | "union" | "artifact" | "hexa";
 
 export default function Home() {
   const [name, setName] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
+  const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [tab, setTab] = useState<Tab>("stat");
+  const [tab, setTab] = useState<Tab>("dashboard");
 
   const basic = result?.basic;
   const stats = result?.stat?.final_stat ?? [];
@@ -81,6 +25,7 @@ export default function Home() {
   const artifact = result?.artifact;
   const hexa = result?.hexa;
   const hexaCores = hexa?.character_hexa_core_equipment ?? [];
+
   useEffect(() => {
     const saved = localStorage.getItem("favorite-characters");
     if (saved) setFavorites(JSON.parse(saved));
@@ -92,37 +37,43 @@ export default function Home() {
       `boss-${basic.character_name}`,
       JSON.stringify(checkedBosses)
     );
+    const savedParty = localStorage.getItem(
+  `boss-party-${basic.character_name}`
+);
+    localStorage.setItem(
+  `boss-party-${basic.character_name}`,
+  JSON.stringify(bossPartySize)
+);
   }, [checkedBosses, basic?.character_name]);
 
-  async function search(targetName?: string) {
-    const searchName = targetName ?? name;
-    if (!searchName) return;
+ async function search(targetName?: string) {
+  const searchName = targetName ?? name;
+  if (!searchName) return;
 
-    setLoading(true);
-    setResult(null);
-    setTab("stat");
+  setLoading(true);
+  setResult(null);
+  setTab("dashboard");
 
-    try {
-      const res = await fetch(`/api/character?name=${encodeURIComponent(searchName)}`);
-      const data = await res.json();
+  try {
+    const res = await fetch(
+      `/api/character?name=${encodeURIComponent(searchName)}`
+    );
+    const data = await res.json();
 
-      setName(searchName);
-      setResult(data);
+    setName(searchName);
+    setResult(data);
 
-      const saved = localStorage.getItem(`boss-${searchName}`);
-      setCheckedBosses(saved ? JSON.parse(saved) : []);
-    } catch {
-      alert("조회 실패");
-    }
+    const saved = localStorage.getItem(`boss-${searchName}`);
+    setCheckedBosses(saved ? JSON.parse(saved) : []);
 
-    setLoading(false);
+    const savedParty = localStorage.getItem(`boss-party-${searchName}`);
+    setBossPartySize(savedParty ? JSON.parse(savedParty) : {});
+  } catch {
+    alert("조회 실패");
   }
 
-  function formatNumber(value: any) {
-    const num = Number(String(value).replace(/,/g, ""));
-    if (isNaN(num)) return value;
-    return num.toLocaleString();
-  }
+  setLoading(false);
+}
 
   function getStat(statName: string) {
     return stats.find((s: any) => s.stat_name === statName)?.stat_value ?? "-";
@@ -153,17 +104,19 @@ export default function Home() {
         : [...prev, bossName]
     );
   }
-function toggleBossGroup(groupBosses: string[]) {
-  setCheckedBosses((prev) => {
-    const allChecked = groupBosses.every((boss) => prev.includes(boss));
 
-    if (allChecked) {
-      return prev.filter((boss) => !groupBosses.includes(boss));
-    }
+  function toggleBossGroup(groupBosses: string[]) {
+    setCheckedBosses((prev) => {
+      const allChecked = groupBosses.every((boss) => prev.includes(boss));
 
-    return Array.from(new Set([...prev, ...groupBosses]));
-  });
-}
+      if (allChecked) {
+        return prev.filter((boss) => !groupBosses.includes(boss));
+      }
+
+      return Array.from(new Set([...prev, ...groupBosses]));
+    });
+  }
+
   function resetBosses() {
     if (!confirm("이번 주 보스 체크를 초기화할까?")) return;
     setCheckedBosses([]);
@@ -175,7 +128,7 @@ function toggleBossGroup(groupBosses: string[]) {
     const updated = [
       basic.character_name,
       ...favorites.filter((x) => x !== basic.character_name),
-    ].slice(0, 10);
+    ].slice(0, 36);
 
     setFavorites(updated);
     localStorage.setItem("favorite-characters", JSON.stringify(updated));
@@ -296,9 +249,7 @@ function toggleBossGroup(groupBosses: string[]) {
             textAlign: "center",
           }}
         >
-          <div style={{ color: "#aaa", marginBottom: 8 }}>
-            주간 보스 총합
-          </div>
+          <div style={{ color: "#aaa", marginBottom: 8 }}>주간 보스 총합</div>
 
           <div
             style={{
@@ -405,170 +356,46 @@ function toggleBossGroup(groupBosses: string[]) {
               flexWrap: "wrap",
             }}
           >
-            {tabButton("stat", "스탯")}
+            {tabButton("dashboard", "대시보드")}
             {tabButton("boss", "주간 보스")}
+            {tabButton("stat", "스탯")}
             {tabButton("equip", "장비")}
             {tabButton("union", "유니온")}
             {tabButton("artifact", "아티팩트")}
             {tabButton("hexa", "헥사")}
           </div>
+{tab === "dashboard" && (
+  <Dashboard
+    characterName={basic.character_name}
+    currentBossTotal={currentBossTotal}
+    favorites={favorites}
+    allFavoriteBossTotal={allFavoriteBossTotal}
+    getCharacterBossTotal={getCharacterBossTotal}
+    search={search}
+  />
+)}
 
-          {tab === "stat" && (
-            <div>
-              <h3 style={{ fontSize: 22 }}>스탯</h3>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 10,
-                  marginTop: 20,
-                  textAlign: "left",
-                }}
-              >
-                {[
-                  ["전투력", formatNumber(getStat("전투력"))],
-                  ["STR", formatNumber(getStat("STR"))],
-                  ["DEX", formatNumber(getStat("DEX"))],
-                  ["INT", formatNumber(getStat("INT"))],
-                  ["LUK", formatNumber(getStat("LUK"))],
-                  ["보공", `${formatNumber(getStat("보스 몬스터 데미지"))}%`],
-                  ["방무", `${formatNumber(getStat("몬스터 방어율 무시"))}%`],
-                  ["크확", `${formatNumber(getStat("크리티컬 확률"))}%`],
-                  ["크뎀", `${formatNumber(getStat("크리티컬 데미지"))}%`],
-                ].map(([label, value]) => (
-                  <div
-                    key={label}
-                    style={{
-                      background: "#10141c",
-                      border: "1px solid #2a3140",
-                      borderRadius: 12,
-                      padding: 14,
-                    }}
-                  >
-                    <div style={{ color: "#aaa", fontSize: 13 }}>{label}</div>
-                    <div style={{ fontSize: 20, fontWeight: "bold" }}>{value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+{tab === "stat" && (
+  <StatTab
+    getStat={getStat}
+  />
+)}
 
           {tab === "boss" && (
-            <div>
-              <h3 style={{ fontSize: 22 }}>주간 보스 체크</h3>
-
-              <p style={{ color: "#aaa" }}>
-                체크됨 : {checkedBosses.length} / {bossList.length}
-              </p>
-
-              <div
-                style={{
-                  background: "#10141c",
-                  border: "1px solid #2a3140",
-                  borderRadius: 14,
-                  padding: 16,
-                  marginBottom: 18,
-                }}
-              >
-                <div style={{ color: "#aaa", marginBottom: 6 }}>
-                  현재 캐릭터 예상 결정석 수익
-                </div>
-
-                <div style={{ fontSize: 28, fontWeight: "bold", color: "#3ee7a8" }}>
-                  {formatNumber(currentBossTotal)} 메소
-                </div>
-              </div>
-<div
-  style={{
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginBottom: 18,
-  }}
->
-  {bossGroups.map((group) => {
-    const allChecked = group.bosses.every((boss) =>
-      checkedBosses.includes(boss)
-    );
-
-    return (
-      <button
-        key={group.name}
-        onClick={() => toggleBossGroup(group.bosses)}
-        style={{
-          background: allChecked ? "#1f8f5f" : "#202635",
-          color: "white",
-          border: allChecked ? "1px solid #3ee7a8" : "1px solid #444",
-          borderRadius: 999,
-          padding: "8px 14px",
-          cursor: "pointer",
-          fontWeight: allChecked ? "bold" : "normal",
-        }}
-      >
-        {allChecked ? "✅ " : "➕ "}
-        {group.name}
-      </button>
-    );
-  })}
-</div>
-              <button
-                onClick={resetBosses}
-                style={{
-                  marginBottom: 18,
-                  background: "#303848",
-                  color: "white",
-                  border: "1px solid #555",
-                  borderRadius: 8,
-                  padding: "8px 14px",
-                  cursor: "pointer",
-                }}
-              >
-                이번 주 초기화
-              </button>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
-                  gap: 10,
-                  textAlign: "left",
-                }}
-              >
-                {bossList.map((boss) => {
-                  const checked = checkedBosses.includes(boss.name);
-
-                  return (
-                    <button
-                      key={boss.name}
-                      onClick={() => toggleBoss(boss.name)}
-                      style={{
-                        background: checked ? "#1f8f5f" : "#10141c",
-                        color: "white",
-                        border: checked ? "1px solid #3ee7a8" : "1px solid #2a3140",
-                        borderRadius: 10,
-                        padding: 12,
-                        textAlign: "left",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div>{checked ? "✅ " : "⬜ "}{boss.name}</div>
-                      <div style={{ color: checked ? "#d7ffe9" : "#888", fontSize: 12, marginTop: 4 }}>
-                        {formatNumber(boss.price)} 메소
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <BossTab
+              checkedBosses={checkedBosses}
+              currentBossTotal={currentBossTotal}
+              toggleBoss={toggleBoss}
+              toggleBossGroup={toggleBossGroup}
+              resetBosses={resetBosses}
+            />
           )}
 
           {tab === "union" && (
             <div>
               <h3 style={{ fontSize: 22, marginBottom: 20 }}>유니온</h3>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
                 <div style={{ background: "#10141c", padding: 20, borderRadius: 14, border: "1px solid #2a3140" }}>
                   <div style={{ color: "#aaa", fontSize: 13 }}>유니온 레벨</div>
                   <div style={{ fontSize: 34, fontWeight: "bold", marginTop: 8, color: "#3ee7a8" }}>
@@ -653,72 +480,74 @@ function toggleBossGroup(groupBosses: string[]) {
               </div>
             </div>
           )}
-{tab === "hexa" && (
-  <div>
-    <h3 style={{ fontSize: 22, marginBottom: 20 }}>헥사</h3>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 12,
-        textAlign: "left",
-      }}
-    >
-      {hexaCores.length === 0 && (
-        <div
-          style={{
-            background: "#10141c",
-            border: "1px solid #2a3140",
-            borderRadius: 12,
-            padding: 18,
-            gridColumn: "1 / 3",
-            textAlign: "center",
-            color: "#aaa",
-          }}
-        >
-          헥사 코어 정보가 없거나 6차 전직 전 캐릭터야.
-        </div>
-      )}
+          {tab === "hexa" && (
+            <div>
+              <h3 style={{ fontSize: 22, marginBottom: 20 }}>헥사</h3>
 
-      {hexaCores.map((core: any, index: number) => (
-        <div
-          key={index}
-          style={{
-            background: "#10141c",
-            border: "1px solid #2a3140",
-            borderRadius: 12,
-            padding: 14,
-          }}
-        >
-          <div style={{ color: "#ffb86b", fontSize: 13 }}>
-            {core.hexa_core_type}
-          </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                  textAlign: "left",
+                }}
+              >
+                {hexaCores.length === 0 && (
+                  <div
+                    style={{
+                      background: "#10141c",
+                      border: "1px solid #2a3140",
+                      borderRadius: 12,
+                      padding: 18,
+                      gridColumn: "1 / 3",
+                      textAlign: "center",
+                      color: "#aaa",
+                    }}
+                  >
+                    헥사 코어 정보가 없거나 6차 전직 전 캐릭터야.
+                  </div>
+                )}
 
-          <div
-            style={{
-              fontSize: 17,
-              fontWeight: "bold",
-              marginTop: 6,
-            }}
-          >
-            {core.hexa_core_name}
-          </div>
+                {hexaCores.map((core: any, index: number) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: "#10141c",
+                      border: "1px solid #2a3140",
+                      borderRadius: 12,
+                      padding: 14,
+                    }}
+                  >
+                    <div style={{ color: "#ffb86b", fontSize: 13 }}>
+                      {core.hexa_core_type}
+                    </div>
 
-          <div
-            style={{
-              color: "#3ee7a8",
-              marginTop: 8,
-              fontWeight: "bold",
-            }}
-          >
-            Lv.{core.hexa_core_level}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+                    <div
+                      style={{
+                        fontSize: 17,
+                        fontWeight: "bold",
+                        marginTop: 6,
+                      }}
+                    >
+                      {core.hexa_core_name}
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#3ee7a8",
+                        marginTop: 8,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Lv.{core.hexa_core_level}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {tab === "equip" && (
             <div>
               <h3 style={{ fontSize: 22 }}>장비</h3>
@@ -741,7 +570,7 @@ function toggleBossGroup(groupBosses: string[]) {
                       key={item.item_equipment_slot}
                       style={{
                         background: "#10141c",
-                        padding: 14,
+                        padding: 8,
                         borderRadius: 14,
                         border: "1px solid #2a3140",
                         minHeight: 170,
