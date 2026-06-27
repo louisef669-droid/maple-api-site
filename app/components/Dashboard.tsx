@@ -73,7 +73,7 @@ export default function Dashboard({
         }}
       >
         <SummaryPanel
-          title="💎 현재 프리셋 결정석"
+          title="💎 현재 프리셋 결정석 💎" 
           main={`${crystalPercent}%`}
           sub={`${soldCrystalCount} / ${weeklyCrystalLimit}개 판매`}
           desc={`남은 판매 가능: ${remainingCrystalCount}개`}
@@ -91,7 +91,7 @@ export default function Dashboard({
           }}
         >
           <div style={{ color: "#aaa", marginBottom: 8 }}>
-            🌐 모든 프리셋 총합
+            💎 본 부계정 총합 💎
           </div>
 
           <div
