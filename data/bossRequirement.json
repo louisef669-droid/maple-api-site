@@ -31,6 +31,11 @@
   { "name": "노말 칼로스", "level": 285, "arcane": 0, "authentic": 300 },
   { "name": "카오스 칼로스", "level": 285, "arcane": 0, "authentic": 330 },
 
+  { "name": "이지 최초의 대적자", "level": 270, "arcane": 0, "authentic": 220},
+  { "name": "노말 최초의 대적자", "level": 270, "arcane": 0, "authentic": 320},
+  { "name": "하드 최초의 대적자", "level": 275, "arcane": 0, "authentic": 340},
+  { "name": "익스트림 최초의 대적자", "level": 285, "arcane": 0, "authentic": 460},
+
   { "name": "이지 카링", "level": 275, "arcane": 0, "authentic": 230 },
   { "name": "노말 카링", "level": 285, "arcane": 0, "authentic": 330 },
   { "name": "하드 카링", "level": 285, "arcane": 0, "authentic": 350 },

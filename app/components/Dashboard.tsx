@@ -227,7 +227,7 @@ export default function Dashboard({
           value={`${formatNumber(currentBossTotal)} 메소`}
           green
         />
-        <Card title="현재 프리셋 캐릭터 수" value={`${favorites.length}명`} />
+        <Card title="현재 계정 캐릭터 수" value={`${favorites.length}명`} />
         <Card
           title="현재 프리셋 총 수익"
           value={`${formatNumber(allFavoriteBossTotal)} 메소`}

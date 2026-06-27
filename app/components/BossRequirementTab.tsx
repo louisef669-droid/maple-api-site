@@ -52,36 +52,35 @@ export default function BossRequirementTab({
     const arcaneOk = req.arcane === 0 || arcaneForce >= req.arcane;
     const authenticOk = req.authentic === 0 || authenticForce >= req.authentic;
 
-    if (levelOk && arcaneOk && authenticOk) {
-      return {
-        label: "가능",
-        icon: "✅",
-        color: "#3ee7a8",
-      };
-    }
+if (levelOk && arcaneOk && authenticOk) {
+  return {
+    label: "가능",
+    icon: "🟢",
+    color: "#3ee7a8",
+  };
+}
 
-    if (!levelOk && (!arcaneOk || !authenticOk)) {
-      return {
-        label: "레벨/포스 부족",
-        icon: "🔴",
-        color: "#ff5c5c",
-      };
-    }
+if (!levelOk && (!arcaneOk || !authenticOk)) {
+  return {
+    label: "둘 다 부족",
+    icon: "🔴",
+    color: "#ff5c5c",
+  };
+}
 
-    if (!levelOk) {
-      return {
-        label: "레벨 부족",
-        icon: "🟡",
-        color: "#ffd166",
-      };
-    }
+if (!levelOk) {
+  return {
+    label: "레벨 부족",
+    icon: "🟡",
+    color: "#ffd166",
+  };
+}
 
-    return {
-      label: "포스 부족",
-      icon: "🟠",
-      color: "#ff8c42",
-    };
-  }
+return {
+  label: "포스 부족",
+  icon: "🟠",
+  color: "#ff8c42",
+};  }
 
   return (
     <div>
