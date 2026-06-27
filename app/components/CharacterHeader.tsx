@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { formatNumber } from "../../lib/format";
 
 type Tab =
@@ -8,6 +7,7 @@ type Tab =
   | "account"
   | "stat"
   | "boss"
+  | "boss-requirement"
   | "equip"
   | "union"
   | "artifact"
@@ -16,7 +16,7 @@ type Tab =
 type CharacterHeaderProps = {
   basic: any;
   saveFavorite: () => void;
-  tabButton: (target: Tab, label: string) => ReactNode;
+  tabButton: (target: Tab, label: string) => React.ReactNode;
 };
 
 export default function CharacterHeader({
@@ -27,50 +27,46 @@ export default function CharacterHeader({
   return (
     <div>
       <div
+        className="character-header"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: 26,
           marginBottom: 18,
-          padding: "20px 24px",
+          padding: "18px 22px",
           background:
-            "linear-gradient(135deg, rgba(16,20,28,.98), rgba(31,39,56,.9))",
+            "linear-gradient(135deg, rgba(16,20,28,.95), rgba(28,35,50,.85))",
           border: "1px solid rgba(255,255,255,.08)",
-          borderRadius: 20,
+          borderRadius: 18,
           boxShadow: "0 14px 35px rgba(0,0,0,.35)",
         }}
       >
         <div
+          className="character-image-box"
           style={{
             width: 180,
             height: 180,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            borderRadius: 20,
+            borderRadius: 18,
             background:
-              "radial-gradient(circle, rgba(255,255,255,.12), rgba(0,0,0,0) 66%)",
-            overflow: "hidden",
+              "radial-gradient(circle, rgba(255,255,255,.10), rgba(0,0,0,0) 65%)",
           }}
         >
-          {basic.character_image ? (
-            <img
-              src={basic.character_image}
-              alt={basic.character_name}
-              width={210}
-              style={{
-                imageRendering: "auto",
-                filter:
-                  "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.22))",
-              }}
-            />
-          ) : (
-            <div style={{ color: "#777" }}>이미지 없음</div>
-          )}
+          <img
+            src={basic.character_image}
+            width={210}
+            style={{
+              imageRendering: "auto",
+              filter:
+                "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.2))",
+            }}
+          />
         </div>
 
-        <div style={{ textAlign: "left", minWidth: 360 }}>
+        <div className="character-info" style={{ textAlign: "left", minWidth: 360 }}>
           <div style={{ color: "#ffb86b", fontSize: 14, fontWeight: "bold" }}>
             🍁 CHARACTER PROFILE
           </div>
@@ -104,7 +100,7 @@ export default function CharacterHeader({
               background: "linear-gradient(135deg, #ff7a00, #d14d00)",
               color: "white",
               border: "1px solid rgba(255,255,255,.12)",
-              padding: "10px 16px",
+              padding: "9px 16px",
               borderRadius: 10,
               cursor: "pointer",
               fontWeight: "bold",
@@ -117,6 +113,7 @@ export default function CharacterHeader({
       </div>
 
       <div
+        className="character-tabs"
         style={{
           display: "flex",
           justifyContent: "center",
@@ -126,14 +123,15 @@ export default function CharacterHeader({
           flexWrap: "wrap",
         }}
       >
-        {tabButton("dashboard", "대시보드")}
-        {tabButton("account", "계정관리")}
-        {tabButton("boss", "주간 보스")}
-        {tabButton("stat", "스탯")}
-        {tabButton("equip", "장비")}
-        {tabButton("union", "유니온")}
-        {tabButton("artifact", "아티팩트")}
-        {tabButton("hexa", "헥사")}
+{tabButton("dashboard", "대시보드")}
+{tabButton("account", "계정관리")}
+{tabButton("boss", "주간 보스")}
+{tabButton("boss-requirement", "보스 스펙")}
+{tabButton("equip", "장비")}
+{tabButton("union", "유니온")}
+{tabButton("artifact", "아티팩트")}
+{tabButton("hexa", "헥사")}
+{tabButton("stat", "스탯")}
       </div>
     </div>
   );

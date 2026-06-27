@@ -1,0 +1,40 @@
+[
+  { "name": "노말 스우", "level": 210, "arcane": 0, "authentic": 0 },
+  { "name": "하드 스우", "level": 210, "arcane": 0, "authentic": 0 },
+
+  { "name": "노말 데미안", "level": 210, "arcane": 0, "authentic": 0 },
+  { "name": "하드 데미안", "level": 210, "arcane": 0, "authentic": 0 },
+
+  { "name": "이지 루시드", "level": 230, "arcane": 360, "authentic": 0 },
+  { "name": "노말 루시드", "level": 230, "arcane": 360, "authentic": 0 },
+  { "name": "하드 루시드", "level": 230, "arcane": 360, "authentic": 0 },
+
+  { "name": "이지 윌", "level": 235, "arcane": 560, "authentic": 0 },
+  { "name": "노말 윌", "level": 250, "arcane": 760, "authentic": 0 },
+  { "name": "하드 윌", "level": 250, "arcane": 760, "authentic": 0 },
+
+  { "name": "노말 더스크", "level": 255, "arcane": 730, "authentic": 0 },
+  { "name": "카오스 더스크", "level": 255, "arcane": 730, "authentic": 0 },
+
+  { "name": "노말 듄켈", "level": 265, "arcane": 850, "authentic": 0 },
+  { "name": "하드 듄켈", "level": 265, "arcane": 850, "authentic": 0 },
+
+  { "name": "노말 진힐라", "level": 250, "arcane": 900, "authentic": 0 },
+  { "name": "하드 진힐라", "level": 250, "arcane": 900, "authentic": 0 },
+
+  { "name": "검은 마법사", "level": 275, "arcane": 1320, "authentic": 0, "maxForce": 1455 },
+
+  { "name": "노말 세렌", "level": 270, "arcane": 0, "authentic": 200 },
+  { "name": "하드 세렌", "level": 275, "arcane": 0, "authentic": 200 },
+
+  { "name": "이지 칼로스", "level": 270, "arcane": 0, "authentic": 200 },
+  { "name": "노말 칼로스", "level": 285, "arcane": 0, "authentic": 300 },
+  { "name": "카오스 칼로스", "level": 285, "arcane": 0, "authentic": 330 },
+
+  { "name": "이지 카링", "level": 275, "arcane": 0, "authentic": 230 },
+  { "name": "노말 카링", "level": 285, "arcane": 0, "authentic": 330 },
+  { "name": "하드 카링", "level": 285, "arcane": 0, "authentic": 350 },
+
+  { "name": "노말 림보", "level": 285, "arcane": 0, "authentic": 500 },
+  { "name": "하드 림보", "level": 285, "arcane": 0, "authentic": 500 }
+]

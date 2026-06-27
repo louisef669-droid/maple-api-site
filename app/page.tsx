@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import bossList from "../data/bossPrice.json";
+import BossRequirementTab from "./components/BossRequirementTab";
 import BossTab from "./components/BossTab";
 import StatTab from "./components/StatTab";
 import Dashboard from "./components/Dashboard";
@@ -26,8 +27,9 @@ import {
 type Tab =
   | "dashboard"
   | "account"
-  | "stat"
   | "boss"
+  | "boss-requirement"
+  | "stat"
   | "equip"
   | "union"
   | "artifact"
@@ -437,8 +439,9 @@ function renamePreset(oldName: string) {
         }}
       >
         <div
-          style={{
-            fontSize: 38,
+  className="mcm-logo-title"
+  style={{
+    fontSize: 38,
             fontWeight: 900,
             color: "#ffb347",
             letterSpacing: "-1px",
@@ -469,16 +472,26 @@ function renamePreset(oldName: string) {
         renamePreset={renamePreset}
       />
 
-      <div style={{ display: "flex", gap: 10 }}>
+      <div className="mcm-search-row"
+    style={{ display: "flex",
+    gap: 10,
+    width: "100%",
+    maxWidth: 520,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  }}
+>
         <input
-          value={name}
+  className="mcm-search-input"
+  value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") search();
           }}
           placeholder="캐릭터명 입력"
           style={{
-            width: 420,
+            width: "100%",
+            maxWidth: 420,
             padding: 14,
             background: "#1d2330",
             color: "white",
@@ -559,15 +572,18 @@ function renamePreset(oldName: string) {
 
       {basic && (
         <div
-          style={{
-            marginTop: 20,
-            background: "#181d26",
-            padding: 20,
-            borderRadius: 20,
-            width: 840,
-            textAlign: "center",
-          }}
-        >
+  className="mcm-page-panel"
+  style={{
+    marginTop: 20,
+    background: "#181d26",
+    padding: 20,
+    borderRadius: 20,
+    width: 840,
+    textAlign: "center",
+  }}
+>
+        
+      
           <CharacterHeader
             basic={basic}
             saveFavorite={saveFavorite}
@@ -600,6 +616,13 @@ function renamePreset(oldName: string) {
     activePreset={activePreset}
     setActivePreset={setActivePreset}
     allPresetBossTotal={allPresetBossTotal}
+  />
+)}
+
+{tab === "boss-requirement" && (
+  <BossRequirementTab
+    level={basic.character_level}
+    getStat={getStat}
   />
 )}
 

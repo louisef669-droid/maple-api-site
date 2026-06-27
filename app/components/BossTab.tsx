@@ -94,7 +94,7 @@ export default function BossTab({
 }: BossTabProps) {
   const [selectedBossByBase, setSelectedBossByBase] = useState<Record<string, string>>({});
 
-  const bossCards = useMemo<BossCard[]>((() => {
+  const bossCards = useMemo<BossCard[]>(() => {
     const map = new Map<string, BossItem[]>();
 
     bosses.forEach((boss) => {
@@ -109,12 +109,13 @@ export default function BossTab({
       .sort((a, b) => {
         const aIndex = bossOrder.indexOf(a.baseName);
         const bIndex = bossOrder.indexOf(b.baseName);
+
         if (aIndex === -1 && bIndex === -1) return a.baseName.localeCompare(b.baseName);
         if (aIndex === -1) return 1;
         if (bIndex === -1) return -1;
         return aIndex - bIndex;
       });
-  }) as any, []);
+  }, []);
 
   const maxBossCount = 12;
 
@@ -135,26 +136,51 @@ export default function BossTab({
     setCheckedBosses((prev) => {
       const wasChecked = prev.some((name) => variantNames.includes(name));
       if (!wasChecked) return prev;
+
       return [...prev.filter((name) => !variantNames.includes(name)), nextBossName];
     });
   }
 
   function changeParty(bossName: string, nextParty: number) {
     if (nextParty < 1 || nextParty > 6) return;
-    setBossPartySize((prev) => ({ ...prev, [bossName]: nextParty }));
+
+    setBossPartySize((prev) => ({
+      ...prev,
+      [bossName]: nextParty,
+    }));
   }
 
   return (
     <div>
-      <h3 style={{ fontSize: 22 }}>주간 보스 체크</h3>
+      <h3 className="mcm-crystal-title" style={{ fontSize: 24, marginTop: 0 }}>
+        주간 보스 체크
+      </h3>
 
       <div style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", color: "#aaa", marginBottom: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            color: "#b8c0d4",
+            marginBottom: 8,
+            fontSize: 14,
+          }}
+        >
           <span>진행률</span>
-          <span>{checkedCardCount} / {maxBossCount} · {progress}%</span>
+          <span>
+            {checkedCardCount} / {maxBossCount} · {progress}%
+          </span>
         </div>
 
-        <div style={{ height: 14, background: "#0b0f16", borderRadius: 999, overflow: "hidden", border: "1px solid #252d3a" }}>
+        <div
+          style={{
+            height: 14,
+            background: "#0b0f16",
+            borderRadius: 999,
+            overflow: "hidden",
+            border: "1px solid #252d3a",
+          }}
+        >
           <div
             style={{
               width: `${progress}%`,
@@ -166,20 +192,29 @@ export default function BossTab({
         </div>
       </div>
 
-      <div style={{ background: "#10141c", border: "1px solid #2a3140", borderRadius: 14, padding: 16, marginBottom: 18 }}>
-        <div style={{ color: "#aaa", marginBottom: 6 }}>현재 캐릭터 예상 결정석 수익</div>
+      <div className="mcm-card" style={{ padding: 16, marginBottom: 18 }}>
+        <div style={{ color: "#b8c0d4", marginBottom: 6, fontSize: 14 }}>
+          현재 캐릭터 예상 결정석 수익
+        </div>
         <div style={{ fontSize: 28, fontWeight: "bold", color: "#3ee7a8" }}>
           {formatNumber(currentBossTotal)} 메소
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
+      <div
+        translate="no"
+        className="notranslate mcm-chip-row"
+        style={{ marginBottom: 18 }}
+      >
         {bossGroups.map((group) => {
           const allChecked = group.bosses.every((boss) => checkedBosses.includes(boss));
 
           return (
             <button
               key={group.name}
+              type="button"
+              translate="no"
+              className="notranslate"
               onClick={() => toggleBossGroup(group.bosses)}
               style={{
                 background: allChecked ? "#1f8f5f" : "#202635",
@@ -191,33 +226,39 @@ export default function BossTab({
                 fontWeight: allChecked ? "bold" : "normal",
               }}
             >
-              {allChecked ? "✅ " : "➕ "}
-              {group.name}
+              <span translate="no" className="notranslate">
+                {allChecked ? "✅ " : "➕ "}
+                {group.name}
+              </span>
             </button>
           );
         })}
       </div>
 
       <button
+        type="button"
         onClick={resetBosses}
         style={{
           marginBottom: 18,
           background: "#303848",
           color: "white",
           border: "1px solid #555",
-          borderRadius: 8,
-          padding: "8px 14px",
+          borderRadius: 10,
+          padding: "9px 14px",
           cursor: "pointer",
         }}
       >
         이번 주 초기화
       </button>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, textAlign: "left" }}>
+      <div className="mcm-grid" style={{ textAlign: "left" }}>
         {bossCards.map((card) => {
           const checkedBoss = card.variants.find((boss) => checkedBosses.includes(boss.name));
-          const selectedBossName = checkedBoss?.name ?? selectedBossByBase[card.baseName] ?? card.variants[0].name;
-          const selectedBoss = card.variants.find((boss) => boss.name === selectedBossName) ?? card.variants[0];
+          const selectedBossName =
+            checkedBoss?.name ?? selectedBossByBase[card.baseName] ?? card.variants[0].name;
+
+          const selectedBoss =
+            card.variants.find((boss) => boss.name === selectedBossName) ?? card.variants[0];
 
           const checked = checkedBosses.includes(selectedBoss.name);
           const party = bossPartySize[selectedBoss.name] ?? 1;
@@ -227,28 +268,42 @@ export default function BossTab({
           return (
             <div
               key={card.baseName}
-              onClick={() => toggleBoss(selectedBoss.name)}
+              translate="no"
+              className={`notranslate mcm-card ${checked ? "mcm-card-checked" : ""}`}
               style={{
-                background: checked ? "linear-gradient(135deg, #173f32, #10141c)" : "#10141c",
-                color: "white",
-                border: checked ? "1px solid #3ee7a8" : "1px solid #2a3140",
-                borderRadius: 14,
                 padding: 14,
-                textAlign: "left",
-                cursor: "pointer",
-                boxShadow: checked ? "0 0 14px rgba(62, 231, 168, 0.18)" : "none",
+                color: "white",
               }}
             >
-              <div style={{ fontSize: 15, fontWeight: "bold" }}>
-                {checked ? "✅ " : "⬜ "}
-                {card.baseName}
-              </div>
+              <button
+                type="button"
+                translate="no"
+                className="notranslate"
+                onClick={() => toggleBoss(selectedBoss.name)}
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  color: "white",
+                  border: "none",
+                  padding: 0,
+                  margin: 0,
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ fontSize: 16, fontWeight: "bold" }}>
+                  <span translate="no" className="notranslate">
+                    {checked ? "✅ " : "⬜ "}
+                    {card.baseName}
+                  </span>
+                </div>
+              </button>
 
               {card.variants.length > 1 ? (
                 <select
                   value={selectedBoss.name}
-                    translate="no"
-                  onClick={(e) => e.stopPropagation()}
+                  translate="no"
+                  className="notranslate"
                   onChange={(e) => changeDifficulty(card, e.target.value)}
                   style={{
                     marginTop: 10,
@@ -256,34 +311,62 @@ export default function BossTab({
                     background: "#202635",
                     color: diffColor,
                     border: `1px solid ${diffColor}`,
-                    borderRadius: 8,
-                    padding: "6px 8px",
+                    borderRadius: 10,
+                    padding: "7px 9px",
                     cursor: "pointer",
                     fontWeight: "bold",
                   }}
                 >
                   {card.variants.map((boss) => (
-                    <option key={boss.name} value={boss.name}>
+                    <option
+                      key={boss.name}
+                      value={boss.name}
+                      translate="no"
+                      className="notranslate"
+                    >
                       {boss.difficulty ?? boss.name}
                     </option>
                   ))}
                 </select>
               ) : (
-                <div style={{ marginTop: 10, color: diffColor, fontSize: 13, fontWeight: "bold" }}>
+                <div
+                  translate="no"
+                  className="notranslate"
+                  style={{
+                    marginTop: 10,
+                    color: diffColor,
+                    fontSize: 13,
+                    fontWeight: "bold",
+                  }}
+                >
                   {selectedBoss.difficulty ?? selectedBoss.name}
                 </div>
               )}
 
-              <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0b0f16", border: "1px solid #252d3a", borderRadius: 10, padding: "8px 10px" }}>
+              <div
+                translate="no"
+                className="notranslate"
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#0b0f16",
+                  border: "1px solid #252d3a",
+                  borderRadius: 12,
+                  padding: "8px 10px",
+                }}
+              >
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    changeParty(selectedBoss.name, party - 1);
-                  }}
+                  type="button"
+                  translate="no"
+                  className="notranslate"
+                  onClick={() => changeParty(selectedBoss.name, party - 1)}
+                  disabled={party <= 1}
                   style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 8,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
                     border: "none",
                     background: party <= 1 ? "#222" : "#2d3645",
                     color: "white",
@@ -294,25 +377,30 @@ export default function BossTab({
                   ◀
                 </button>
 
-<div
-  translate="no"
-  style={{
-    color: "#ffb86b",
-    fontSize: 15,
-    fontWeight: "bold",
-  }}
->
-  👥 {party}P
-</div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    changeParty(selectedBoss.name, party + 1);
-                  }}
+                <div
+                  translate="no"
+                  className="notranslate"
                   style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 8,
+                    color: "#ffb86b",
+                    fontSize: 15,
+                    fontWeight: "bold",
+                    minWidth: 58,
+                    textAlign: "center",
+                  }}
+                >
+                  👥 {party}P
+                </div>
+
+                <button
+                  type="button"
+                  translate="no"
+                  className="notranslate"
+                  onClick={() => changeParty(selectedBoss.name, party + 1)}
+                  disabled={party >= 6}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
                     border: "none",
                     background: party >= 6 ? "#222" : "#1f8f5f",
                     color: "white",
@@ -324,7 +412,14 @@ export default function BossTab({
                 </button>
               </div>
 
-              <div style={{ marginTop: 10, color: checked ? "#ffd166" : "#888", fontSize: 14, fontWeight: "bold" }}>
+              <div
+                style={{
+                  marginTop: 10,
+                  color: checked ? "#ffd166" : "#8e98ad",
+                  fontSize: 14,
+                  fontWeight: "bold",
+                }}
+              >
                 💰 {formatNumber(dividedPrice)} 메소
               </div>
             </div>
