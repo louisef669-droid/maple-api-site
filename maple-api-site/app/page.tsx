@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import bossList from "../data/bossPrice.json";
-import { formatNumber } from "../lib/format";
 import BossTab from "./components/BossTab";
 import StatTab from "./components/StatTab";
 import Dashboard from "./components/Dashboard";
@@ -12,6 +11,17 @@ import UnionTab from "./components/UnionTab";
 import ArtifactTab from "./components/ArtifactTab";
 import HexaTab from "./components/HexaTab";
 import AccountTab from "./components/AccountTab";
+import PresetBar from "./components/PresetBar";
+import {
+  DEFAULT_PRESETS,
+  loadPresets,
+  savePresets,
+  loadActivePreset,
+  saveActivePreset,
+  loadFavoritesByPreset,
+  saveFavoritesByPreset,
+  deletePresetStorage,
+} from "../lib/presetStorage";
 
 type Tab =
   | "dashboard"
@@ -30,6 +40,8 @@ export default function Home() {
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
   const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [presets, setPresets] = useState<string[]>(DEFAULT_PRESETS);
+  const [activePreset, setActivePreset] = useState(DEFAULT_PRESETS[0]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [tab, setTab] = useState<Tab>("dashboard");
 
@@ -41,38 +53,72 @@ export default function Home() {
   const hexa = result?.hexa;
   const hexaCores = hexa?.character_hexa_core_equipment ?? [];
 
-useEffect(() => {
-  const savedFavorites = localStorage.getItem("favorite-characters");
-  if (savedFavorites) {
-    setFavorites(JSON.parse(savedFavorites));
+  function bossKey(characterName: string, presetName = activePreset) {
+    return `boss-${presetName}-${characterName}`;
   }
 
-  const savedRecent = localStorage.getItem("recent-searches");
-  if (savedRecent) {
-    setRecentSearches(JSON.parse(savedRecent));
+  function bossPartyKey(characterName: string, presetName = activePreset) {
+    return `boss-party-${presetName}-${characterName}`;
   }
 
-  const lastName = localStorage.getItem("last-character-name");
-  if (lastName) {
-    search(lastName);
+  function recentKey(presetName = activePreset) {
+    return `recent-searches-${presetName}`;
   }
-}, []);
+
+  function lastNameKey(presetName = activePreset) {
+    return `last-character-name-${presetName}`;
+  }
+
+  useEffect(() => {
+    const loadedPresets = loadPresets();
+    const loadedActivePreset = loadActivePreset(loadedPresets);
+
+    setPresets(loadedPresets);
+    setActivePreset(loadedActivePreset);
+
+    const savedFavorites = loadFavoritesByPreset(loadedActivePreset);
+    setFavorites(savedFavorites);
+
+    const savedRecent = localStorage.getItem(recentKey(loadedActivePreset));
+    setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
+
+    const lastName = localStorage.getItem(lastNameKey(loadedActivePreset));
+    if (lastName) {
+      search(lastName, loadedActivePreset);
+    }
+  }, []);
+
+  useEffect(() => {
+    saveActivePreset(activePreset);
+
+    setFavorites(loadFavoritesByPreset(activePreset));
+
+    const savedRecent = localStorage.getItem(recentKey(activePreset));
+    setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
+
+    const lastName = localStorage.getItem(lastNameKey(activePreset));
+    if (lastName) {
+      search(lastName, activePreset);
+    } else {
+      goHome(false);
+    }
+  }, [activePreset]);
 
   useEffect(() => {
     if (!basic?.character_name) return;
 
     localStorage.setItem(
-      `boss-${basic.character_name}`,
+      bossKey(basic.character_name),
       JSON.stringify(checkedBosses)
     );
 
     localStorage.setItem(
-      `boss-party-${basic.character_name}`,
+      bossPartyKey(basic.character_name),
       JSON.stringify(bossPartySize)
     );
-  }, [checkedBosses, bossPartySize, basic?.character_name]);
+  }, [checkedBosses, bossPartySize, basic?.character_name, activePreset]);
 
-  async function search(targetName?: string) {
+  async function search(targetName?: string, presetName = activePreset) {
     const searchName = targetName ?? name;
     if (!searchName) return;
 
@@ -86,23 +132,26 @@ useEffect(() => {
       );
       const data = await res.json();
 
-    setName(searchName);
-localStorage.setItem("last-character-name", searchName);
+      setName(searchName);
+      setResult(data);
 
-const updatedRecent = [
-  searchName,
-  ...recentSearches.filter((x) => x !== searchName),
-].slice(0, 10);
+      localStorage.setItem(lastNameKey(presetName), searchName);
 
-setRecentSearches(updatedRecent);
-localStorage.setItem("recent-searches", JSON.stringify(updatedRecent));
+      const savedRecent = localStorage.getItem(recentKey(presetName));
+      const prevRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
-setResult(data);
+      const updatedRecent = [
+        searchName,
+        ...prevRecent.filter((x: string) => x !== searchName),
+      ].slice(0, 10);
 
-      const saved = localStorage.getItem(`boss-${searchName}`);
-      setCheckedBosses(saved ? JSON.parse(saved) : []);
+      setRecentSearches(updatedRecent);
+      localStorage.setItem(recentKey(presetName), JSON.stringify(updatedRecent));
 
-      const savedParty = localStorage.getItem(`boss-party-${searchName}`);
+      const savedBosses = localStorage.getItem(bossKey(searchName, presetName));
+      setCheckedBosses(savedBosses ? JSON.parse(savedBosses) : []);
+
+      const savedParty = localStorage.getItem(bossPartyKey(searchName, presetName));
       setBossPartySize(savedParty ? JSON.parse(savedParty) : {});
     } catch {
       alert("조회 실패");
@@ -116,10 +165,10 @@ setResult(data);
   }
 
   function getCharacterBossTotal(characterName: string) {
-    const saved = localStorage.getItem(`boss-${characterName}`);
+    const saved = localStorage.getItem(bossKey(characterName));
     const bosses = saved ? JSON.parse(saved) : [];
 
-    const savedParty = localStorage.getItem(`boss-party-${characterName}`);
+    const savedParty = localStorage.getItem(bossPartyKey(characterName));
     const partyData = savedParty ? JSON.parse(savedParty) : {};
 
     return bosses.reduce((sum: number, bossName: string) => {
@@ -132,7 +181,7 @@ setResult(data);
   }
 
   function getCharacterBossCount(characterName: string) {
-    const saved = localStorage.getItem(`boss-${characterName}`);
+    const saved = localStorage.getItem(bossKey(characterName));
     const bosses = saved ? JSON.parse(saved) : [];
 
     return bosses.length;
@@ -176,72 +225,98 @@ setResult(data);
     setCheckedBosses([]);
   }
 
-function saveFavorite() {
-  if (!basic?.character_name) return;
+  function saveFavorite() {
+    if (!basic?.character_name) return;
 
-  const updated = [
-    basic.character_name,
-    ...favorites.filter((x) => x !== basic.character_name),
-  ].slice(0, 36);
+    const updated = [
+      basic.character_name,
+      ...favorites.filter((x) => x !== basic.character_name),
+    ].slice(0, 36);
 
-  setFavorites(updated);
-  localStorage.setItem("favorite-characters", JSON.stringify(updated));
-}
-
-function removeFavorite(characterName: string) {
-  if (!confirm(`${characterName} 캐릭터를 즐겨찾기에서 삭제할까?`)) return;
-
-  const updated = favorites.filter((x) => x !== characterName);
-
-  setFavorites(updated);
-  localStorage.setItem("favorite-characters", JSON.stringify(updated));
-}
-
-function moveFavorite(characterName: string, direction: "up" | "down") {
-  const index = favorites.indexOf(characterName);
-  if (index === -1) return;
-
-  const nextIndex = direction === "up" ? index - 1 : index + 1;
-  if (nextIndex < 0 || nextIndex >= favorites.length) return;
-
-  const updated = [...favorites];
-  [updated[index], updated[nextIndex]] = [updated[nextIndex], updated[index]];
-
-  setFavorites(updated);
-  localStorage.setItem("favorite-characters", JSON.stringify(updated));
-}
-
-function goHome() {
-  setName("");
-  setResult(null);
-  setLoading(false);
-  setTab("dashboard");
-
-  localStorage.removeItem("last-character-name");
-}
-
-function gradeColor(grade: string) {
-    if (grade === "레전드리") return "#3ee7a8";
-    if (grade === "유니크") return "#ffd166";
-    if (grade === "에픽") return "#b388ff";
-    if (grade === "레어") return "#66aaff";
-    return "#cccccc";
+    setFavorites(updated);
+    saveFavoritesByPreset(activePreset, updated);
   }
 
-  function potentialLines(item: any) {
-    return [
-      item.potential_option_1,
-      item.potential_option_2,
-      item.potential_option_3,
-    ].filter(Boolean);
+  function removeFavorite(characterName: string) {
+    if (!confirm(`${characterName} 캐릭터를 즐겨찾기에서 삭제할까?`)) return;
+
+    const updated = favorites.filter((x) => x !== characterName);
+
+    setFavorites(updated);
+    saveFavoritesByPreset(activePreset, updated);
   }
 
-  function additionalLines(item: any) {
-    return [
-      item.additional_potential_option_1,
-      item.additional_potential_option_2,
-      item.additional_potential_option_3,
-    ].filter(Boolean);
+  function moveFavorite(characterName: string, direction: "up" | "down") {
+    const index = favorites.indexOf(characterName);
+    if (index === -1) return;
+
+    const nextIndex = direction === "up" ? index - 1 : index + 1;
+    if (nextIndex < 0 || nextIndex >= favorites.length) return;
+
+    const updated = [...favorites];
+    [updated[index], updated[nextIndex]] = [updated[nextIndex], updated[index]];
+
+    setFavorites(updated);
+    saveFavoritesByPreset(activePreset, updated);
+  }
+
+  function goHome(removeLastName = true) {
+    setName("");
+    setResult(null);
+    setLoading(false);
+    setCheckedBosses([]);
+    setBossPartySize({});
+    setTab("dashboard");
+
+    if (removeLastName) {
+      localStorage.removeItem(lastNameKey(activePreset));
+    }
+  }
+
+  function addPreset() {
+    const input = prompt("프리셋 이름을 입력해줘");
+    if (!input?.trim()) return;
+
+    const presetName = input.trim();
+
+    if (presets.includes(presetName)) {
+      alert("이미 있는 프리셋이야.");
+      return;
+    }
+
+    const updated = [...presets, presetName];
+
+    setPresets(updated);
+    savePresets(updated);
+    setActivePreset(presetName);
+  }
+
+  function removePreset(presetName: string) {
+    if (presets.length <= 1) {
+      alert("프리셋은 최소 1개 있어야 해.");
+      return;
+    }
+
+    if (
+      !confirm(
+        `${presetName} 프리셋을 삭제할까?\n즐겨찾기 목록도 같이 사라져.`
+      )
+    ) {
+      return;
+    }
+
+    const updated = presets.filter((x) => x !== presetName);
+    const nextActive = activePreset === presetName ? updated[0] : activePreset;
+
+    setPresets(updated);
+    savePresets(updated);
+    deletePresetStorage(presetName);
+    setActivePreset(nextActive);
+  }
+
+  function clearRecentSearches() {
+    setRecentSearches([]);
+    localStorage.removeItem(recentKey(activePreset));
   }
 
   function tabButton(target: Tab, label: string) {
@@ -279,38 +354,46 @@ function gradeColor(grade: string) {
         paddingBottom: 80,
       }}
     >
-<div
-  onClick={goHome}
-  style={{
-    textAlign: "center",
-    marginBottom: 28,
-    cursor: "pointer",
-    userSelect: "none",
-  }}
->
-  <div
-    style={{
-      fontSize: 38,
-      fontWeight: 900,
-      color: "#ffb347",
-      letterSpacing: "-1px",
-      textShadow: "0 0 18px rgba(255,180,71,.25)",
-    }}
-  >
-    🍁 Maple Crystal Manager
-  </div>
+      <div
+        onClick={() => goHome()}
+        style={{
+          textAlign: "center",
+          marginBottom: 22,
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 38,
+            fontWeight: 900,
+            color: "#ffb347",
+            letterSpacing: "-1px",
+            textShadow: "0 0 18px rgba(255,180,71,.25)",
+          }}
+        >
+          🍁 Maple Crystal Manager
+        </div>
 
-  <div
-    style={{
-      marginTop: 6,
-      color: "#9ea7b8",
-      fontSize: 15,
-      letterSpacing: "1px",
-    }}
-  >
-    Weekly Boss & Crystal Dashboard
-  </div>
-</div>
+        <div
+          style={{
+            marginTop: 6,
+            color: "#9ea7b8",
+            fontSize: 15,
+            letterSpacing: "1px",
+          }}
+        >
+          Weekly Boss & Crystal Dashboard
+        </div>
+      </div>
+
+      <PresetBar
+        presets={presets}
+        activePreset={activePreset}
+        setActivePreset={setActivePreset}
+        addPreset={addPreset}
+        removePreset={removePreset}
+      />
 
       <div style={{ display: "flex", gap: 10 }}>
         <input
@@ -347,58 +430,57 @@ function gradeColor(grade: string) {
           검색
         </button>
       </div>
-{recentSearches.length > 0 && (
-  <div
-    style={{
-      marginTop: 12,
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap",
-      justifyContent: "center",
-      maxWidth: 720,
-    }}
-  >
-    <span style={{ color: "#aaa", fontSize: 13, alignSelf: "center" }}>
-      최근조회
-    </span>
 
-    {recentSearches.map((recent) => (
-      <button
-        key={recent}
-        onClick={() => search(recent)}
-        style={{
-          background: "#10141c",
-          color: "white",
-          border: "1px solid #2a3140",
-          borderRadius: 999,
-          padding: "6px 12px",
-          cursor: "pointer",
-          fontSize: 13,
-        }}
-      >
-        🍁 {recent}
-      </button>
-    ))}
+      {recentSearches.length > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            justifyContent: "center",
+            maxWidth: 720,
+          }}
+        >
+          <span style={{ color: "#aaa", fontSize: 13, alignSelf: "center" }}>
+            최근조회
+          </span>
 
-    <button
-      onClick={() => {
-        setRecentSearches([]);
-        localStorage.removeItem("recent-searches");
-      }}
-      style={{
-        background: "transparent",
-        color: "#888",
-        border: "1px solid #333",
-        borderRadius: 999,
-        padding: "6px 10px",
-        cursor: "pointer",
-        fontSize: 12,
-      }}
-    >
-      전체삭제
-    </button>
-  </div>
-)}
+          {recentSearches.map((recent) => (
+            <button
+              key={recent}
+              onClick={() => search(recent)}
+              style={{
+                background: "#10141c",
+                color: "white",
+                border: "1px solid #2a3140",
+                borderRadius: 999,
+                padding: "6px 12px",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              🍁 {recent}
+            </button>
+          ))}
+
+          <button
+            onClick={clearRecentSearches}
+            style={{
+              background: "transparent",
+              color: "#888",
+              border: "1px solid #333",
+              borderRadius: 999,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+          >
+            전체삭제
+          </button>
+        </div>
+      )}
+
       {loading && <p style={{ marginTop: 30 }}>조회중...</p>}
 
       {basic && (
@@ -430,17 +512,17 @@ function gradeColor(grade: string) {
             />
           )}
 
-{tab === "account" && (
-  <AccountTab
-  favorites={favorites}
-  currentCharacter={basic.character_name}
-  getCharacterBossTotal={getCharacterBossTotal}
-  getCharacterBossCount={getCharacterBossCount}
-  search={search}
-  removeFavorite={removeFavorite}
-  moveFavorite={moveFavorite}
-/>
-)}
+          {tab === "account" && (
+            <AccountTab
+              favorites={favorites}
+              currentCharacter={basic.character_name}
+              getCharacterBossTotal={getCharacterBossTotal}
+              getCharacterBossCount={getCharacterBossCount}
+              search={search}
+              removeFavorite={removeFavorite}
+              moveFavorite={moveFavorite}
+            />
+          )}
 
           {tab === "stat" && <StatTab getStat={getStat} />}
 
@@ -457,15 +539,13 @@ function gradeColor(grade: string) {
             />
           )}
 
-{tab === "union" && <UnionTab union={union} />}
+          {tab === "union" && <UnionTab union={union} />}
 
-{tab === "artifact" && (
-  <ArtifactTab artifact={artifact} />
-)}
+          {tab === "artifact" && <ArtifactTab artifact={artifact} />}
 
-{tab === "hexa" && <HexaTab hexaCores={hexaCores} />}
+          {tab === "hexa" && <HexaTab hexaCores={hexaCores} />}
 
-{tab === "equip" && <EquipTab equips={equips} />}
+          {tab === "equip" && <EquipTab equips={equips} />}
         </div>
       )}
     </main>

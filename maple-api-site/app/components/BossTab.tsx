@@ -30,7 +30,7 @@ const bossOrder = [
 const bossGroups = [
   { name: "카룻", bosses: ["카오스 반반", "카오스 피에르", "카오스 블러디퀸", "카오스 벨룸"] },
   { name: "스데루슬더", bosses: ["노말 스우", "노말 데미안", "이지 루시드", "노말 가엔슬", "노말 더스크"] },
-  { name: "노진힐라인", bosses: ["하드 스우", "하드 데미안", "노말 루시드", "노말 윌", "노말 듄켈", "노말 진힐라"] },
+  { name: "노진힐라인", bosses: ["하드 스우", "하드 데미안", "노말 가엔슬", "노말 루시드", "노말 윌", "노말 더스크", "노말 듄켈", "노말 진힐라"] },
   { name: "하드 검밑솔", bosses: ["카오스 가엔슬", "하드 스우", "하드 루시드", "하드 윌", "하드 데미안", "카오스 더스크", "하드 듄켈", "하드 진힐라"] },
   { name: "익스우~이카", bosses: ["익스우", "하드 세렌", "노말 칼로스", "노말 쌀숭", "이지 카링"] },
 ];
@@ -247,6 +247,7 @@ export default function BossTab({
               {card.variants.length > 1 ? (
                 <select
                   value={selectedBoss.name}
+                    translate="no"
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => changeDifficulty(card, e.target.value)}
                   style={{
@@ -293,10 +294,16 @@ export default function BossTab({
                   ◀
                 </button>
 
-                <div style={{ color: "#ffb86b", fontSize: 15, fontWeight: "bold" }}>
-                  👥 {party}인
-                </div>
-
+<div
+  translate="no"
+  style={{
+    color: "#ffb86b",
+    fontSize: 15,
+    fontWeight: "bold",
+  }}
+>
+  👥 {party}P
+</div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
