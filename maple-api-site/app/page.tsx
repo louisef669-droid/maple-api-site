@@ -180,6 +180,22 @@ export default function Home() {
     }, 0);
   }
 
+  function getCharacterBossTotalByPreset(characterName: string, presetName: string) {
+  const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
+  const bosses = saved ? JSON.parse(saved) : [];
+
+  const savedParty = localStorage.getItem(`boss-party-${presetName}-${characterName}`);
+  const partyData = savedParty ? JSON.parse(savedParty) : {};
+
+  return bosses.reduce((sum: number, bossName: string) => {
+    const boss = bossList.find((b) => b.name === bossName);
+    if (!boss) return sum;
+
+    const party = partyData[bossName] ?? 1;
+    return sum + Math.floor(boss.price / party);
+  }, 0);
+}
+
   function getCharacterBossCount(characterName: string) {
     const saved = localStorage.getItem(bossKey(characterName));
     const bosses = saved ? JSON.parse(saved) : [];
@@ -199,6 +215,17 @@ export default function Home() {
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
     0
   );
+  const allPresetBossTotal = presets.reduce((presetSum, presetName) => {
+  const presetFavorites = loadFavoritesByPreset(presetName);
+
+  const presetTotal = presetFavorites.reduce(
+    (sum: number, characterName: string) =>
+      sum + getCharacterBossTotalByPreset(characterName, presetName),
+    0
+  );
+
+  return presetSum + presetTotal;
+}, 0);
 
   function toggleBoss(bossName: string) {
     setCheckedBosses((prev) =>
@@ -506,6 +533,7 @@ export default function Home() {
               currentBossTotal={currentBossTotal}
               favorites={favorites}
               allFavoriteBossTotal={allFavoriteBossTotal}
+              allPresetBossTotal={allPresetBossTotal}
               getCharacterBossTotal={getCharacterBossTotal}
               getCharacterBossCount={getCharacterBossCount}
               search={search}
