@@ -2,11 +2,20 @@
 
 import { formatNumber } from "../../lib/format";
 
+type PresetSummary = {
+  name: string;
+  total: number;
+  count: number;
+  characterCount: number;
+};
+
 type DashboardProps = {
   characterName: string;
   currentBossTotal: number;
   favorites: string[];
   allFavoriteBossTotal: number;
+  allPresetBossTotal: number;
+  presetSummaries: PresetSummary[];
   getCharacterBossTotal: (characterName: string) => number;
   getCharacterBossCount: (characterName: string) => number;
   search: (targetName: string) => void;
@@ -17,6 +26,8 @@ export default function Dashboard({
   currentBossTotal,
   favorites,
   allFavoriteBossTotal,
+  allPresetBossTotal,
+  presetSummaries = [],
   getCharacterBossTotal,
   getCharacterBossCount,
   search,
@@ -29,11 +40,7 @@ export default function Dashboard({
   );
 
   const remainingCrystalCount = Math.max(weeklyCrystalLimit - soldCrystalCount, 0);
-
-  const crystalPercent = Math.min(
-    Math.round((soldCrystalCount / weeklyCrystalLimit) * 100),
-    100
-  );
+  const crystalPercent = Math.min(Math.round((soldCrystalCount / weeklyCrystalLimit) * 100), 100);
 
   const progressColor =
     crystalPercent >= 90 ? "#ff5c5c" : crystalPercent >= 60 ? "#ffd166" : "#3ee7a8";
@@ -43,10 +50,15 @@ export default function Dashboard({
 
   const topCharacter =
     favorites.length > 0
-      ? [...favorites].sort(
-          (a, b) => getCharacterBossTotal(b) - getCharacterBossTotal(a)
-        )[0]
+      ? [...favorites].sort((a, b) => getCharacterBossTotal(b) - getCharacterBossTotal(a))[0]
       : null;
+
+  const allPresetCrystalCount = presetSummaries.reduce(
+    (sum, preset) => sum + preset.count,
+    0
+  );
+
+  const allPresetLimit = presetSummaries.length * weeklyCrystalLimit;
 
   return (
     <div>
@@ -54,53 +66,85 @@ export default function Dashboard({
 
       <div
         style={{
-          background: "linear-gradient(135deg, #10141c, #182232)",
-          border: "1px solid #2a3140",
-          borderRadius: 18,
-          padding: 20,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 14,
           marginBottom: 18,
-          textAlign: "center",
         }}
       >
-        <div style={{ color: "#aaa", marginBottom: 6 }}>💎 이번 주 결정석 판매</div>
+        <SummaryPanel
+          title="💎 현재 프리셋 결정석"
+          main={`${crystalPercent}%`}
+          sub={`${soldCrystalCount} / ${weeklyCrystalLimit}개 판매`}
+          desc={`남은 판매 가능: ${remainingCrystalCount}개`}
+          color={progressColor}
+          progress={crystalPercent}
+        />
 
         <div
           style={{
-            fontSize: 38,
-            fontWeight: "bold",
-            color: progressColor,
-            marginBottom: 8,
+            background: "linear-gradient(135deg, #20170b, #10141c)",
+            border: "1px solid #3d3020",
+            borderRadius: 18,
+            padding: 20,
+            textAlign: "center",
           }}
         >
-          {crystalPercent}%
-        </div>
+          <div style={{ color: "#aaa", marginBottom: 8 }}>
+            🌐 모든 프리셋 총합
+          </div>
 
-        <div
-          style={{
-            height: 14,
-            background: "#252d3a",
-            borderRadius: 999,
-            overflow: "hidden",
-            marginBottom: 12,
-          }}
-        >
           <div
             style={{
-              width: `${crystalPercent}%`,
-              height: "100%",
-              background: progressColor,
-              borderRadius: 999,
-              transition: "width 0.25s ease",
+              fontSize: 34,
+              fontWeight: "bold",
+              color: "#ffd166",
+              wordBreak: "break-all",
             }}
-          />
-        </div>
+          >
+            {formatNumber(allPresetBossTotal)} 메소
+          </div>
 
-        <div style={{ color: "#ddd", fontSize: 15, fontWeight: "bold" }}>
-          {soldCrystalCount} / {weeklyCrystalLimit}개 판매
-        </div>
+          <div style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>
+            결정석 {allPresetCrystalCount} / {allPresetLimit}개
+          </div>
 
-        <div style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
-          남은 판매 가능: {remainingCrystalCount}개
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,.08)",
+              display: "grid",
+              gap: 8,
+              textAlign: "left",
+            }}
+          >
+            {presetSummaries.map((preset) => (
+              <div
+                key={preset.name}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: 10,
+                  alignItems: "center",
+                  fontSize: 13,
+                }}
+              >
+                <div>
+                  <div style={{ color: "#ddd", fontWeight: "bold" }}>
+                    🍁 {preset.name}
+                  </div>
+                  <div style={{ color: "#888", fontSize: 12 }}>
+                    {preset.characterCount}명 · {preset.count}/90개
+                  </div>
+                </div>
+
+                <div style={{ color: "#ffd166", fontWeight: "bold" }}>
+                  {formatNumber(preset.total)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -113,27 +157,11 @@ export default function Dashboard({
         }}
       >
         <Card title="현재 캐릭터" value={characterName} />
-        <Card
-          title="현재 캐릭터 주간 수익"
-          value={`${formatNumber(currentBossTotal)} 메소`}
-          green
-        />
-        <Card title="등록 캐릭터 수" value={`${favorites.length}명`} />
-        <Card
-          title="등록 캐릭터 총 수익"
-          value={`${formatNumber(allFavoriteBossTotal)} 메소`}
-          blue
-        />
-        <Card
-          title="캐릭터 평균 수익"
-          value={`${formatNumber(averageIncome)} 메소`}
-          yellow
-        />
-        <Card
-          title="최고 수익 캐릭터"
-          value={topCharacter ? topCharacter : "-"}
-          purple
-        />
+        <Card title="현재 캐릭터 주간 수익" value={`${formatNumber(currentBossTotal)} 메소`} green />
+        <Card title="현재 프리셋 캐릭터 수" value={`${favorites.length}명`} />
+        <Card title="현재 프리셋 총 수익" value={`${formatNumber(allFavoriteBossTotal)} 메소`} blue />
+        <Card title="캐릭터 평균 수익" value={`${formatNumber(averageIncome)} 메소`} yellow />
+        <Card title="최고 수익 캐릭터" value={topCharacter ? topCharacter : "-"} purple />
       </div>
 
       {favorites.length > 0 && (
@@ -152,7 +180,6 @@ export default function Dashboard({
               const total = getCharacterBossTotal(fav);
               const count = getCharacterBossCount(fav);
               const percent = Math.min(Math.round((count / 12) * 100), 100);
-
               const color =
                 percent >= 100 ? "#3ee7a8" : percent >= 60 ? "#ffd166" : "#ff8c42";
 
@@ -174,25 +201,9 @@ export default function Dashboard({
                     cursor: "pointer",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <div style={{ fontSize: 16, fontWeight: "bold" }}>
-                      🍁 {fav}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color,
-                        fontWeight: "bold",
-                      }}
-                    >
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ fontSize: 16, fontWeight: "bold" }}>🍁 {fav}</div>
+                    <div style={{ fontSize: 12, color, fontWeight: "bold" }}>
                       {count}/12
                     </div>
                   </div>
@@ -216,13 +227,7 @@ export default function Dashboard({
                     />
                   </div>
 
-                  <div
-                    style={{
-                      color: "#3ee7a8",
-                      fontWeight: "bold",
-                      fontSize: 15,
-                    }}
-                  >
+                  <div style={{ color: "#3ee7a8", fontWeight: "bold", fontSize: 15 }}>
                     {formatNumber(total)} 메소
                   </div>
 
@@ -250,6 +255,66 @@ export default function Dashboard({
           아직 즐겨찾기 캐릭터가 없어. 캐릭터 조회 후 ⭐ 저장을 누르면 여기에 표시돼.
         </div>
       )}
+    </div>
+  );
+}
+
+function SummaryPanel({
+  title,
+  main,
+  sub,
+  desc,
+  color,
+  progress,
+}: {
+  title: string;
+  main: string;
+  sub: string;
+  desc: string;
+  color: string;
+  progress: number;
+}) {
+  return (
+    <div
+      style={{
+        background: "linear-gradient(135deg, #10141c, #182232)",
+        border: "1px solid #2a3140",
+        borderRadius: 18,
+        padding: 20,
+        textAlign: "center",
+      }}
+    >
+      <div style={{ color: "#aaa", marginBottom: 6 }}>{title}</div>
+
+      <div style={{ fontSize: 38, fontWeight: "bold", color, marginBottom: 8 }}>
+        {main}
+      </div>
+
+      <div
+        style={{
+          height: 14,
+          background: "#252d3a",
+          borderRadius: 999,
+          overflow: "hidden",
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            width: `${progress}%`,
+            height: "100%",
+            background: color,
+            borderRadius: 999,
+            transition: "width 0.25s ease",
+          }}
+        />
+      </div>
+
+      <div style={{ color: "#ddd", fontSize: 15, fontWeight: "bold" }}>
+        {sub}
+      </div>
+
+      <div style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{desc}</div>
     </div>
   );
 }

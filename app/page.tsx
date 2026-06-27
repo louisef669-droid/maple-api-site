@@ -37,6 +37,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshProgress, setRefreshProgress] = useState("");
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
   const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -180,6 +181,22 @@ export default function Home() {
     }, 0);
   }
 
+  function getCharacterBossTotalByPreset(characterName: string, presetName: string) {
+  const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
+  const bosses = saved ? JSON.parse(saved) : [];
+
+  const savedParty = localStorage.getItem(`boss-party-${presetName}-${characterName}`);
+  const partyData = savedParty ? JSON.parse(savedParty) : {};
+
+  return bosses.reduce((sum: number, bossName: string) => {
+    const boss = bossList.find((b) => b.name === bossName);
+    if (!boss) return sum;
+
+    const party = partyData[bossName] ?? 1;
+    return sum + Math.floor(boss.price / party);
+  }, 0);
+}
+
   function getCharacterBossCount(characterName: string) {
     const saved = localStorage.getItem(bossKey(characterName));
     const bosses = saved ? JSON.parse(saved) : [];
@@ -199,6 +216,34 @@ export default function Home() {
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
     0
   );
+  
+const presetSummaries = presets.map((presetName) => {
+  const presetFavorites = loadFavoritesByPreset(presetName);
+
+  const total = presetFavorites.reduce(
+    (sum: number, characterName: string) =>
+      sum + getCharacterBossTotalByPreset(characterName, presetName),
+    0
+  );
+
+  const count = presetFavorites.reduce((sum: number, characterName: string) => {
+    const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
+    const bosses = saved ? JSON.parse(saved) : [];
+    return sum + bosses.length;
+  }, 0);
+
+  return {
+    name: presetName,
+    total,
+    count,
+    characterCount: presetFavorites.length,
+  };
+});
+
+const allPresetBossTotal = presetSummaries.reduce(
+  (sum, preset) => sum + preset.total,
+  0
+);
 
   function toggleBoss(bossName: string) {
     setCheckedBosses((prev) =>
@@ -221,7 +266,7 @@ export default function Home() {
   }
 
   function resetBosses() {
-    if (!confirm("이번 주 보스 체크를 초기화할까?")) return;
+    if (!confirm("초기화 ㄱ?")) return;
     setCheckedBosses([]);
   }
 
@@ -314,6 +359,34 @@ export default function Home() {
     setActivePreset(nextActive);
   }
 
+function renamePreset(oldName: string) {
+  const input = prompt("새 프리셋 이름을 입력해줘", oldName);
+  if (!input?.trim()) return;
+
+  const newName = input.trim();
+
+  if (newName === oldName) return;
+
+  if (presets.includes(newName)) {
+    alert("이미 있는 프리셋 이름이야.");
+    return;
+  }
+
+  const updated = presets.map((x) => (x === oldName ? newName : x));
+
+  const oldFavorites = loadFavoritesByPreset(oldName);
+
+  setPresets(updated);
+  savePresets(updated);
+
+  saveFavoritesByPreset(newName, oldFavorites);
+  deletePresetStorage(oldName);
+
+  if (activePreset === oldName) {
+    setActivePreset(newName);
+  }
+}
+
   function clearRecentSearches() {
     setRecentSearches([]);
     localStorage.removeItem(recentKey(activePreset));
@@ -393,6 +466,7 @@ export default function Home() {
         setActivePreset={setActivePreset}
         addPreset={addPreset}
         removePreset={removePreset}
+        renamePreset={renamePreset}
       />
 
       <div style={{ display: "flex", gap: 10 }}>
@@ -501,28 +575,33 @@ export default function Home() {
           />
 
           {tab === "dashboard" && (
-            <Dashboard
-              characterName={basic.character_name}
-              currentBossTotal={currentBossTotal}
-              favorites={favorites}
-              allFavoriteBossTotal={allFavoriteBossTotal}
-              getCharacterBossTotal={getCharacterBossTotal}
-              getCharacterBossCount={getCharacterBossCount}
-              search={search}
-            />
-          )}
+<Dashboard
+  characterName={basic.character_name}
+  currentBossTotal={currentBossTotal}
+  favorites={favorites}
+  allFavoriteBossTotal={allFavoriteBossTotal}
+  allPresetBossTotal={allPresetBossTotal}
+  presetSummaries={presetSummaries}
+  getCharacterBossTotal={getCharacterBossTotal}
+  getCharacterBossCount={getCharacterBossCount}
+  search={search}
+/>          )}
 
-          {tab === "account" && (
-            <AccountTab
-              favorites={favorites}
-              currentCharacter={basic.character_name}
-              getCharacterBossTotal={getCharacterBossTotal}
-              getCharacterBossCount={getCharacterBossCount}
-              search={search}
-              removeFavorite={removeFavorite}
-              moveFavorite={moveFavorite}
-            />
-          )}
+{tab === "account" && (
+  <AccountTab
+    favorites={favorites}
+    currentCharacter={basic.character_name}
+    getCharacterBossTotal={getCharacterBossTotal}
+    getCharacterBossCount={getCharacterBossCount}
+    search={search}
+    removeFavorite={removeFavorite}
+    moveFavorite={moveFavorite}
+    presetSummaries={presetSummaries}
+    activePreset={activePreset}
+    setActivePreset={setActivePreset}
+    allPresetBossTotal={allPresetBossTotal}
+  />
+)}
 
           {tab === "stat" && <StatTab getStat={getStat} />}
 
