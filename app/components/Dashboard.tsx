@@ -84,7 +84,7 @@ const enabledFavorites = favorites.filter(
     total: getCharacterBossTotal(name),
   }))
   .sort((a, b) => b.total - a.total)
-  .slice(0, 5);
+  .slice(0, 3);
 
   const allPresetCrystalCount = presetSummaries.reduce(
     (sum, preset) => sum + preset.count,
