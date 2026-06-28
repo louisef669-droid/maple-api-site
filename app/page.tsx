@@ -653,7 +653,7 @@ function renamePreset(oldName: string) {
   characterName={basic.character_name}
   currentBossTotal={currentBossTotal}
   favorites={favorites}
-  allFavoriteBossTotal={allFavoriteBossTotal}
+  allFavoriteBossTotal={allPresetBossTotal}
   allPresetBossTotal={allPresetBossTotal}
   presetSummaries={presetSummaries}
   getCharacterBossTotal={getCharacterBossTotal}
