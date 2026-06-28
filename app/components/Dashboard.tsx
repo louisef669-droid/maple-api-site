@@ -19,6 +19,8 @@ type DashboardProps = {
   getCharacterBossTotal: (characterName: string) => number;
   getCharacterBossCount: (characterName: string) => number;
   search: (targetName: string) => void;
+  disabledCharacters: string[];
+  toggleCharacterEnabled: (characterName: string) => void;
 };
 
 export default function Dashboard({
@@ -31,13 +33,21 @@ export default function Dashboard({
   getCharacterBossTotal,
   getCharacterBossCount,
   search,
+  disabledCharacters = [],
+  toggleCharacterEnabled,
 }: DashboardProps) {
   const weeklyCrystalLimit = 90;
 
-  const soldCrystalCount = favorites.reduce(
+const enabledFavorites = favorites.filter(
+  (characterName) => !disabledCharacters.includes(characterName)
+);
+
+
+  const soldCrystalCount = enabledFavorites.reduce(
     (sum, characterName) => sum + getCharacterBossCount(characterName),
     0
   );
+
 
   const remainingCrystalCount = Math.max(
     weeklyCrystalLimit - soldCrystalCount,
@@ -62,13 +72,13 @@ export default function Dashboard({
       : 0;
 
   const topCharacter =
-    favorites.length > 0
-      ? [...favorites].sort(
-          (a, b) => getCharacterBossTotal(b) - getCharacterBossTotal(a)
-        )[0]
-      : null;
+  enabledFavorites.length > 0
+    ? [...enabledFavorites].sort(
+        (a, b) => getCharacterBossTotal(b) - getCharacterBossTotal(a)
+      )[0]
+    : null;
 
-      const topRanking = [...favorites]
+      const topRanking = [...enabledFavorites]
   .map((name) => ({
     name,
     total: getCharacterBossTotal(name),
@@ -123,7 +133,7 @@ export default function Dashboard({
               wordBreak: "break-all",
             }}
           >
-            {formatNumber(allPresetBossTotal)} 메소
+            {formatNumber(allFavoriteBossTotal)} 메소
           </div>
 
           <div style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>
@@ -227,7 +237,7 @@ export default function Dashboard({
           value={`${formatNumber(currentBossTotal)} 메소`}
           green
         />
-        <Card title="현재 계정 캐릭터 수" value={`${favorites.length}명`} />
+        <Card title="현재 계정 캐릭터 수" value={`${enabledFavorites.length} / ${favorites.length}명`} />
         <Card
           title="현재 프리셋 총 수익"
           value={`${formatNumber(allFavoriteBossTotal)} 메소`}
@@ -311,6 +321,10 @@ export default function Dashboard({
             즐겨찾기 캐릭터 현황
           </h4>
 
+<div style={{ color: "#888", fontSize: 12, marginBottom: 12 }}>
+  ☑ 체크된 캐릭터만 현재 프리셋 통계에 포함됩니다.
+</div>
+
           <div className="favorite-grid" style={{ textAlign: "left" }}>
             {favorites.map((fav) => {
               const total = getCharacterBossTotal(fav);
@@ -323,40 +337,46 @@ export default function Dashboard({
                   : percent >= 60
                   ? "#ffd166"
                   : "#ff8c42";
-
+const enabled = !disabledCharacters.includes(fav);
               return (
                 <div
                   key={fav}
                   onClick={() => search(fav)}
                   className="mcm-card"
                   style={{
-                    background:
-                      fav === characterName
-                        ? "linear-gradient(135deg, #173f32, #10141c)"
-                        : "#10141c",
-                    border:
-                      fav === characterName
-                        ? "1px solid #3ee7a8"
-                        : "1px solid #2a3140",
-                    padding: 14,
-                    cursor: "pointer",
-                  }}
+  background:
+    fav === characterName
+      ? "linear-gradient(135deg, #173f32, #10141c)"
+      : "#10141c",
+
+  border:
+    fav === characterName
+      ? "1px solid #3ee7a8"
+      : "1px solid #2a3140",
+
+  opacity: enabled ? 1 : 0.55,
+
+  padding: 14,
+  cursor: "pointer",
+}}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                      gap: 8,
-                    }}
-                  >
-                    <div style={{ fontSize: 16, fontWeight: "bold" }}>
-                      🍁 {fav}
-                    </div>
-                    <div style={{ fontSize: 12, color, fontWeight: "bold" }}>
-                      {count}/12
-                    </div>
-                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+  <input
+    type="checkbox"
+    checked={enabled}
+    onClick={(e) => e.stopPropagation()}
+    onChange={() => toggleCharacterEnabled(fav)}
+    style={{
+      width: 18,
+      height: 18,
+      cursor: "pointer",
+    }}
+  />
+
+  <div style={{ fontSize: 16, fontWeight: "bold" }}>
+    🍁 {fav}
+  </div>
+</div>
 <div
   style={{
     display: "flex",

@@ -43,6 +43,7 @@ export default function Home() {
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
   const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [disabledCharacters, setDisabledCharacters] = useState<string[]>([]);
   const [presets, setPresets] = useState<string[]>(DEFAULT_PRESETS);
   const [activePreset, setActivePreset] = useState(DEFAULT_PRESETS[0]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -67,6 +68,32 @@ export default function Home() {
   function recentKey(presetName = activePreset) {
     return `recent-searches-${presetName}`;
   }
+
+function disabledCharactersKey(presetName = activePreset) {
+  return `disabled-characters-${presetName}`;
+}
+
+function loadDisabledCharacters(presetName = activePreset) {
+  const saved = localStorage.getItem(disabledCharactersKey(presetName));
+  return saved ? JSON.parse(saved) : [];
+}
+
+function saveDisabledCharacters(presetName: string, disabled: string[]) {
+  localStorage.setItem(disabledCharactersKey(presetName), JSON.stringify(disabled));
+}
+
+function isCharacterEnabled(characterName: string) {
+  return !disabledCharacters.includes(characterName);
+}
+
+function toggleCharacterEnabled(characterName: string) {
+  const updated = disabledCharacters.includes(characterName)
+    ? disabledCharacters.filter((x) => x !== characterName)
+    : [...disabledCharacters, characterName];
+
+  setDisabledCharacters(updated);
+  saveDisabledCharacters(activePreset, updated);
+}
 
   function lastNameKey(presetName = activePreset) {
     return `last-character-name-${presetName}`;
@@ -95,6 +122,7 @@ export default function Home() {
     saveActivePreset(activePreset);
 
     setFavorites(loadFavoritesByPreset(activePreset));
+    setDisabledCharacters(loadDisabledCharacters(activePreset));
 
     const savedRecent = localStorage.getItem(recentKey(activePreset));
     setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
@@ -214,21 +242,31 @@ export default function Home() {
     return sum + Math.floor(boss.price / party);
   }, 0);
 
-  const allFavoriteBossTotal = favorites.reduce(
+const enabledFavorites = favorites.filter(
+  (characterName) => !disabledCharacters.includes(characterName)
+);
+
+  const allFavoriteBossTotal = enabledFavorites.reduce(
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
     0
   );
   
 const presetSummaries = presets.map((presetName) => {
   const presetFavorites = loadFavoritesByPreset(presetName);
+  const presetDisabledCharacters = loadDisabledCharacters(presetName);
 
-  const total = presetFavorites.reduce(
+  const enabledPresetFavorites = presetFavorites.filter(
+    (characterName: string) =>
+      !presetDisabledCharacters.includes(characterName)
+  );
+
+  const total = enabledPresetFavorites.reduce(
     (sum: number, characterName: string) =>
       sum + getCharacterBossTotalByPreset(characterName, presetName),
     0
   );
 
-  const count = presetFavorites.reduce((sum: number, characterName: string) => {
+  const count = enabledPresetFavorites.reduce((sum: number, characterName: string) => {
     const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
     const bosses = saved ? JSON.parse(saved) : [];
     return sum + bosses.length;
@@ -238,7 +276,7 @@ const presetSummaries = presets.map((presetName) => {
     name: presetName,
     total,
     count,
-    characterCount: presetFavorites.length,
+    characterCount: enabledPresetFavorites.length,
   };
 });
 
@@ -601,6 +639,8 @@ function renamePreset(oldName: string) {
   getCharacterBossTotal={getCharacterBossTotal}
   getCharacterBossCount={getCharacterBossCount}
   search={search}
+  disabledCharacters={disabledCharacters}
+  toggleCharacterEnabled={toggleCharacterEnabled}
 />          )}
 
 {tab === "account" && (
