@@ -74,11 +74,15 @@ function disabledCharactersKey(presetName = activePreset) {
 }
 
 function loadDisabledCharacters(presetName = activePreset) {
+  if (typeof window === "undefined") return [];
+
   const saved = localStorage.getItem(disabledCharactersKey(presetName));
   return saved ? JSON.parse(saved) : [];
 }
 
 function saveDisabledCharacters(presetName: string, disabled: string[]) {
+  if (typeof window === "undefined") return;
+
   localStorage.setItem(disabledCharactersKey(presetName), JSON.stringify(disabled));
 }
 
@@ -211,11 +215,18 @@ function toggleCharacterEnabled(characterName: string) {
     }, 0);
   }
 
-  function getCharacterBossTotalByPreset(characterName: string, presetName: string) {
+  function getCharacterBossTotalByPreset(
+  characterName: string,
+  presetName: string
+) {
+  if (typeof window === "undefined") return 0;
+
   const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
   const bosses = saved ? JSON.parse(saved) : [];
 
-  const savedParty = localStorage.getItem(`boss-party-${presetName}-${characterName}`);
+  const savedParty = localStorage.getItem(
+    `boss-party-${presetName}-${characterName}`
+  );
   const partyData = savedParty ? JSON.parse(savedParty) : {};
 
   return bosses.reduce((sum: number, bossName: string) => {
@@ -251,35 +262,44 @@ const enabledFavorites = favorites.filter(
     0
   );
   
-const presetSummaries = presets.map((presetName) => {
-  const presetFavorites = loadFavoritesByPreset(presetName);
-  const presetDisabledCharacters = loadDisabledCharacters(presetName);
+const presetSummaries =
+  typeof window === "undefined"
+    ? []
+    : presets.map((presetName) => {
+        const presetFavorites = loadFavoritesByPreset(presetName);
+        const presetDisabledCharacters = loadDisabledCharacters(presetName);
 
-  const enabledPresetFavorites = presetFavorites.filter(
-    (characterName: string) =>
-      !presetDisabledCharacters.includes(characterName)
-  );
+        const enabledPresetFavorites = presetFavorites.filter(
+          (characterName: string) =>
+            !presetDisabledCharacters.includes(characterName)
+        );
 
-  const total = enabledPresetFavorites.reduce(
-    (sum: number, characterName: string) =>
-      sum + getCharacterBossTotalByPreset(characterName, presetName),
-    0
-  );
+        const total = enabledPresetFavorites.reduce(
+          (sum: number, characterName: string) =>
+            sum + getCharacterBossTotalByPreset(characterName, presetName),
+          0
+        );
 
-  const count = enabledPresetFavorites.reduce((sum: number, characterName: string) => {
-    const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
-    const bosses = saved ? JSON.parse(saved) : [];
-    return sum + bosses.length;
-  }, 0);
+        const count = enabledPresetFavorites.reduce(
+          (sum: number, characterName: string) => {
+            const saved = localStorage.getItem(
+              `boss-${presetName}-${characterName}`
+            );
+            const bosses = saved ? JSON.parse(saved) : [];
+            return sum + bosses.length;
+          },
+          0
+        );
 
-  return {
-    name: presetName,
-    total,
-    count,
-    characterCount: enabledPresetFavorites.length,
-  };
-});
+        return {
+          name: presetName,
+          total,
+          count,
+          characterCount: enabledPresetFavorites.length,
+        };
+      });
 
+  
 const allPresetBossTotal = presetSummaries.reduce(
   (sum, preset) => sum + preset.total,
   0
