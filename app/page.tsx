@@ -100,6 +100,18 @@ function toggleCharacterEnabled(characterName: string) {
   saveDisabledCharacters(activePreset, updated);
 }
 
+function enableAllCharacters() {
+  setDisabledCharacters([]);
+  saveDisabledCharacters(activePreset, []);
+}
+
+function disableAllCharacters() {
+  const updated = [...favorites];
+
+  setDisabledCharacters(updated);
+  saveDisabledCharacters(activePreset, updated);
+}
+
   function lastNameKey(presetName = activePreset) {
     return `last-character-name-${presetName}`;
   }
@@ -693,7 +705,10 @@ marginLeft: 6,
   search={search}
   disabledCharacters={disabledCharacters}
   toggleCharacterEnabled={toggleCharacterEnabled}
-/>          )}
+  enableAllCharacters={enableAllCharacters}
+  disableAllCharacters={disableAllCharacters}
+/>          
+)}
 
 {tab === "account" && (
   <AccountTab

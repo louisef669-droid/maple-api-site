@@ -26,6 +26,8 @@ type DashboardProps = {
   search: (targetName: string) => void;
   disabledCharacters: string[];
   toggleCharacterEnabled: (characterName: string) => void;
+  enableAllCharacters: () => void;
+  disableAllCharacters: () => void;
 };
 
 export default function Dashboard({
@@ -37,6 +39,8 @@ export default function Dashboard({
   presetSummaries = [],
   getCharacterBossTotal,
   getCharacterBossCount,
+  enableAllCharacters,
+  disableAllCharacters,
   search,
   disabledCharacters = [],
   toggleCharacterEnabled,
@@ -282,6 +286,47 @@ export default function Dashboard({
             <h4 style={{ fontSize: 18, marginBottom: 12 }}>
               즐겨찾기 캐릭터 현황
             </h4>
+
+<div
+  style={{
+    display: "flex",
+    gap: 8,
+    marginBottom: 10,
+    flexWrap: "wrap",
+  }}
+>
+  <button
+    type="button"
+   onClick={enableAllCharacters}
+    style={{
+      background: "#173f32",
+      color: "#3ee7a8",
+      border: "1px solid #3ee7a8",
+      borderRadius: 999,
+      padding: "7px 12px",
+      cursor: "pointer",
+      fontWeight: 700,
+    }}
+  >
+    전체 선택
+  </button>
+
+  <button
+    type="button"
+    onClick={disableAllCharacters}
+    style={{
+      background: "#3a1f1f",
+      color: "#ff8c8c",
+      border: "1px solid #ff8c8c",
+      borderRadius: 999,
+      padding: "7px 12px",
+      cursor: "pointer",
+      fontWeight: 700,
+    }}
+  >
+    전체 해제
+  </button>
+</div>
 
             <div style={{ color: "#888", fontSize: 12, marginBottom: 12 }}>
               ☑ 체크된 캐릭터만 현재 프리셋 통계에 포함됩니다.
