@@ -161,3 +161,16 @@ disabled-characters-{preset}
 - 프리셋 Import
 - 자동 Nexon 데이터 갱신
 - UI 애니메이션 개선
+
+## 다음 개발 예정
+
+- FavoriteGrid.tsx 분리
+- SummaryPanel.tsx 분리
+- 프리셋 복사 기능
+- 검색 자동완성
+- 보스 리셋 타이머
+- 카드 hover 애니메이션
+- 모바일 UI 정리
+- 백업 / 복원
+- 프리셋 Export
+- 프리셋 Import
