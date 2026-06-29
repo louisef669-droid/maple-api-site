@@ -2,13 +2,30 @@
   box-sizing: border-box;
 }
 
-html,
+
+@font-face {
+  font-family: "Maplestory";
+  src: url("/fonts/Maplestory OTF Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Maplestory";
+  src: url("/fonts/Maplestory OTF Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+}
+
 body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+
   color: white;
-  background:
-    radial-gradient(circle at top, #31405f 0%, #171d2a 38%, #0d111a 100%);
+  background: radial-gradient(circle at top, #31405f 0%, #171d2a 38%, #0d111a 100%);
+
+  font-family: "Maplestory", sans-serif;
 }
 
 body {

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 type PresetBarProps = {
   presets: string[];
   activePreset: string;
@@ -28,8 +30,10 @@ export default function PresetBar({
             style={{
               display: "flex",
               alignItems: "center",
-              background: active ? "#ff6b00" : "#10141c",
-              border: active ? "1px solid #ffb347" : "1px solid #2a3140",
+              background: active
+  ? "linear-gradient(135deg, #000000, #d86400)"
+  : "#10141c",
+              border: active ? "1px solid #ff863f" : "1px solid #2a3140",
               borderRadius: 999,
               overflow: "hidden",
             }}
@@ -42,13 +46,31 @@ export default function PresetBar({
                 background: "transparent",
                 color: "white",
                 border: "none",
-                padding: "8px 12px",
+                padding: "6px 16px",
                 cursor: "pointer",
-                fontWeight: active ? "bold" : "normal",
+                fontSize: 20,
+                fontWeight: active ? 900 : 800,
+                textShadow: "0 0 6px rgba(0,0,0,0.35)",
               }}
             >
-              {active ? "✅ " : ""}
-              {preset}
+              <span
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+  }}
+>
+  <>
+  <Image
+    src="/icons/maple-leaf.png"
+    alt=""
+    width={48}
+    height={36}
+    draggable={false}
+  />
+  {preset}
+</>
+</span>
             </button>
 
             <button

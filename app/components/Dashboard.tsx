@@ -1,6 +1,9 @@
 "use client";
 
 import { formatNumber } from "../../lib/format";
+import Image from "next/image";
+import Card from "./Card";
+
 
 type PresetSummary = {
   name: string;
@@ -279,7 +282,7 @@ const enabledFavorites = favorites.filter(
           style={{
             display: "grid",
             gridTemplateColumns: "48px 1fr auto",
-            gap: 10,
+            gap: 36,
             alignItems: "center",
             background: "#0b0f16",
             border: "1px solid #252d3a",
@@ -290,7 +293,7 @@ const enabledFavorites = favorites.filter(
         >
           <div
             style={{
-              fontSize: 18,
+              fontSize: 30,
               fontWeight: "bold",
               color:
                 index === 0
@@ -305,11 +308,41 @@ const enabledFavorites = favorites.filter(
             {index + 1}위
           </div>
 
-          <div style={{ fontWeight: "bold" }}>🍁 {character.name}</div>
+          <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontWeight: "bold",
+  }}
+>
+  <Image
+    src="/icons/maple-leaf2.png"
+    alt=""
+    width={44}
+    height={33}
+    draggable={false}
+  />
 
-          <div style={{ color: "#3ee7a8", fontWeight: "bold" }}>
-            {formatNumber(character.total)}
-          </div>
+  <span
+  className="maple-title"
+  style={{
+    fontSize: 30,
+  }}
+>
+  {character.name}
+</span>
+</div>
+
+          <div
+  style={{
+    color: "#3ee7a8",
+    fontWeight: "bold",
+    fontSize: 30
+  }}
+>
+  {formatNumber(character.total)}
+</div>
         </div>
       ))}
     </div>
@@ -360,21 +393,69 @@ const enabled = !disabledCharacters.includes(fav);
   cursor: "pointer",
 }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-  <input
-    type="checkbox"
-    checked={enabled}
-    onClick={(e) => e.stopPropagation()}
-    onChange={() => toggleCharacterEnabled(fav)}
-    style={{
-      width: 18,
-      height: 18,
-      cursor: "pointer",
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    minWidth: 0,
+  }}
+>
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      toggleCharacterEnabled(fav);
     }}
-  />
+    title={enabled ? "통계 포함됨" : "통계 제외됨"}
+    style={{
+  width: 46,
+  height: 46,
+  border: "none",
+  background: "transparent",
+  cursor: "pointer",
+  padding: 0,
+  flexShrink: 0,
 
-  <div style={{ fontSize: 16, fontWeight: "bold" }}>
-    🍁 {fav}
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+
+  filter: enabled
+    ? "drop-shadow(0 0 8px rgba(255,140,66,.9))"
+    : "grayscale(1) opacity(.55)",
+
+  transition: "all .2s ease",
+}}
+  >
+    <Image
+  src={
+    enabled
+      ? "/icons/maple-check.png"
+      : "/icons/maple-uncheck.png"
+  }
+  alt=""
+  width={120}
+  height={90}
+  draggable={false}
+  style={{
+  marginTop: 2,
+  objectFit: "contain",
+}}
+/>
+  </button>
+
+  <div
+    style={{
+      fontSize: 16,
+      fontWeight: "bold",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      minWidth: 0,
+    }}
+  >
+    {fav}
   </div>
 </div>
 <div
@@ -412,7 +493,7 @@ const enabled = !disabledCharacters.includes(fav);
                     style={{
                       color: "#3ee7a8",
                       fontWeight: "bold",
-                      fontSize: 15,
+                      fontSize: 20
                     }}
                   >
                     {formatNumber(total)} 메소
@@ -500,55 +581,6 @@ function SummaryPanel({
       </div>
 
       <div style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{desc}</div>
-    </div>
-  );
-}
-
-function Card({
-  title,
-  value,
-  green,
-  blue,
-  yellow,
-  purple,
-}: {
-  title: string;
-  value: string;
-  green?: boolean;
-  blue?: boolean;
-  yellow?: boolean;
-  purple?: boolean;
-}) {
-  const color = green
-    ? "#3ee7a8"
-    : blue
-    ? "#66aaff"
-    : yellow
-    ? "#ffd166"
-    : purple
-    ? "#b388ff"
-    : "white";
-
-  return (
-    <div
-      className="mcm-card"
-      style={{
-        padding: 18,
-        minHeight: 86,
-      }}
-    >
-      <div style={{ color: "#aaa", fontSize: 13 }}>{title}</div>
-      <div
-        style={{
-          fontSize: 21,
-          fontWeight: "bold",
-          marginTop: 8,
-          color,
-          wordBreak: "break-all",
-        }}
-      >
-        {value}
-      </div>
     </div>
   );
 }
