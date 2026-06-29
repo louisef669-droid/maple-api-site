@@ -62,6 +62,7 @@ export default function CharacterHeader({
   width={300}
   style={{
     transform: "scale(1.8)",
+    pointerEvents: "none",
     imageRendering: "auto",
     filter:
       "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.2))",
