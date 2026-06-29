@@ -295,3 +295,23 @@ button:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: #ffb347;
 }
+
+폰트 적용
+
+.maple-title {
+  font-family: "Maplestory", sans-serif;
+  font-weight: 700;
+}
+
+.maple-text {
+  font-family: "Maplestory", sans-serif;
+  font-weight: 300;
+}
+
+.maple-light {
+  font-family: "Maplestory Light";
+}
+
+.maple-bold {
+  font-family: "Maplestory Bold";
+}

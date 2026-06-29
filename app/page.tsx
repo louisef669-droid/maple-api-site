@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import bossList from "../data/bossPrice.json";
 import BossRequirementTab from "./components/BossRequirementTab";
 import BossTab from "./components/BossTab";
@@ -496,19 +497,50 @@ function renamePreset(oldName: string) {
           userSelect: "none",
         }}
       >
-        <div
+<div
   className="mcm-logo-title"
   style={{
-    fontSize: 38,
-            fontWeight: 900,
-            color: "#ffb347",
-            letterSpacing: "-1px",
-            textShadow: "0 0 18px rgba(255,180,71,.25)",
-          }}
-        >
-          🍁 Maple Crystal Manager
-        </div>
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0,
+marginRight: 10,
+marginLeft: 6,
 
+    fontSize: 38,
+    fontWeight: 900,
+    color: "#ffb347",
+    letterSpacing: "-1px",
+    textShadow: "0 0 18px rgba(255,180,71,.25)",
+  }}
+>
+  <Image
+  src="/icons/maple-leaf.png"
+  alt=""
+  width={60}
+  height={50}
+  draggable={false}
+  style={{
+    transform: "translateY(3px) rotate(-8deg)",
+    marginRight: 8,
+  }}
+/>
+
+  <span>Maple Crystal Manager</span>
+
+  <Image
+  src="/icons/maple-leaf2.png"
+  alt=""
+  width={60}
+  height={60}
+  draggable={false}
+  style={{
+    transform: "translateY(3px) rotate(8deg)",
+    marginLeft: -4,
+    filter: "drop-shadow(0 0 8px rgba(255,120,0,.8))",
+  }}
+/>
+</div>
         <div
           style={{
             marginTop: 6,

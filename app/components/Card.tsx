@@ -44,17 +44,17 @@ export default function Card({
       </div>
 
       <div
-        className="maple-title"
-        style={{
-          fontSize: 26,
-          gap: 6,
-          marginTop: 8,
-          color,
-          wordBreak: "break-all",
-        }}
-      >
-        {value}
-      </div>
+  className="maple-title"
+  style={{
+    color,
+    fontSize: 24,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  }}
+>
+  {value}
+</div>
     </div>
   );
 }

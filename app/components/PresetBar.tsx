@@ -62,11 +62,14 @@ export default function PresetBar({
 >
   <>
   <Image
-    src="/icons/maple-leaf.png"
+    src="/icons/maple-leaf2.png"
     alt=""
     width={48}
     height={36}
     draggable={false}
+    style={{
+  transform: "rotate(8deg)",
+}}
   />
   {preset}
 </>
