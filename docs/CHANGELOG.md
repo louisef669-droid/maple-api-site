@@ -38,3 +38,31 @@
 - Git 구조 정리
 - Vercel 프로젝트 정리
 - MCM 프로젝트 루트 정리
+
+# 2026-06-29
+
+## Added
+- 메이플스토리 폰트 적용
+- 단풍잎 로고 아이콘 적용
+- 체크/해제 단풍잎 아이콘 적용
+- 메소 아이콘 적용
+- TopRanking 컴포넌트 추가
+- Card 컴포넌트 추가
+
+## Improved
+- Dashboard 카드 UI 개선
+- TOP 랭킹 UI 개선
+- 로고 영역 디자인 개선
+- 프리셋 버튼 단풍잎 아이콘 적용
+- 메소 숫자 표시 방식 개선
+- 즐겨찾기 카드 체크 UI 개선
+
+## Fixed
+- Turbopack 실행 시 maple-api-site 캐시 폴더 생성 문제 우회
+- JSX 괄호 오류 수정
+- TopRanking 위치 오류 수정
+
+## Refactor
+- Card.tsx 분리
+- TopRanking.tsx 분리
+- Dashboard 구조 일부 정리

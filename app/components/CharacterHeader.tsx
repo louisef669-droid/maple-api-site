@@ -43,28 +43,31 @@ export default function CharacterHeader({
         }}
       >
         <div
-          className="character-image-box"
-          style={{
-            width: 180,
-            height: 180,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 18,
-            background:
-              "radial-gradient(circle, rgba(255,255,255,.10), rgba(0,0,0,0) 65%)",
-          }}
-        >
-          <img
-            src={basic.character_image}
-            width={210}
-            style={{
-              imageRendering: "auto",
-              filter:
-                "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.2))",
-            }}
-          />
-        </div>
+  className="character-image-box"
+  style={{
+    width: 260,
+    height: 260,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
+    background:
+      "radial-gradient(circle, rgba(255,255,255,.10), rgba(0,0,0,0) 65%)",
+    overflow: "visible",
+    flexShrink: 0,
+  }}
+>
+ <img
+  src={basic.character_image}
+  width={300}
+  style={{
+    transform: "scale(1.8)",
+    imageRendering: "auto",
+    filter:
+      "contrast(1.12) saturate(1.12) drop-shadow(0 0 18px rgba(255,255,255,.2))",
+  }}
+/>
+</div>
 
         <div className="character-info" style={{ textAlign: "left", minWidth: 360 }}>
           <div style={{ color: "#ffb86b", fontSize: 14, fontWeight: "bold" }}>
