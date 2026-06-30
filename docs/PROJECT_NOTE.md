@@ -150,6 +150,7 @@ disabled-characters-{preset}
 - Artifact
 - Hexa
 - Preset 관리
+- 즐겨찾기 전체선택 해제 버튼
 
 ---
 

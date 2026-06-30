@@ -4,7 +4,7 @@ import { formatNumber } from "../../lib/format";
 import Image from "next/image";
 import Card from "./Card";
 import TopRanking from "./TopRanking";
-import { title } from "process";
+import { useState } from "react";
 
 
 type PresetSummary = {
@@ -28,6 +28,8 @@ type DashboardProps = {
   toggleCharacterEnabled: (characterName: string) => void;
   enableAllCharacters: () => void;
   disableAllCharacters: () => void;
+  createFullBackupCode: () => void;
+  restoreFullBackupCode: () => void;
 };
 
 export default function Dashboard({
@@ -44,6 +46,8 @@ export default function Dashboard({
   search,
   disabledCharacters = [],
   toggleCharacterEnabled,
+  createFullBackupCode,
+  restoreFullBackupCode,
 }: DashboardProps) {
   const weeklyCrystalLimit = 90;
 
@@ -111,6 +115,57 @@ export default function Dashboard({
     <div>
       <h3 style={{ fontSize: 22, marginBottom: 20 }}>계정 대시보드</h3>
 
+<div
+  className="mcm-card"
+  style={{
+    marginBottom: 18,
+    padding: 18,
+    border: "1px solid #2a3140",
+    background: "linear-gradient(135deg, #10141c, #151b26)",
+  }}
+>
+  <div style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+    백업 / 복원
+  </div>
+
+  <div style={{ color: "#aaa", fontSize: 13, marginBottom: 12 }}>
+    즐겨찾기, 보스 체크, 프리셋 정보를 백업 코드로 저장하거나 복원할 수 있어.
+  </div>
+
+  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <button
+      type="button"
+      onClick={createFullBackupCode}
+      style={{
+        background: "#173f32",
+        color: "#3ee7a8",
+        border: "1px solid #3ee7a8",
+        borderRadius: 999,
+        padding: "8px 14px",
+        cursor: "pointer",
+        fontWeight: 700,
+      }}
+    >
+      백업 코드 생성
+    </button>
+
+    <button
+      type="button"
+      onClick={restoreFullBackupCode}
+      style={{
+        background: "#1f2f4a",
+        color: "#8cc8ff",
+        border: "1px solid #8cc8ff",
+        borderRadius: 999,
+        padding: "8px 14px",
+        cursor: "pointer",
+        fontWeight: 700,
+      }}
+    >
+      백업 코드 복원
+    </button>
+  </div>
+</div>
       <div className="dashboard-grid-2" style={{ marginBottom: 18 }}>
         <SummaryPanel
           title="💎 현재 프리셋 결정석 💎"

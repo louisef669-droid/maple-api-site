@@ -24,6 +24,11 @@ import {
   saveFavoritesByPreset,
   deletePresetStorage,
 } from "../lib/presetStorage";
+import {
+  createBackupCode as makeBackupCode,
+  parseBackupCode,
+  type BackupData,
+} from "../lib/mcmBackup";
 
 type Tab =
   | "dashboard"
@@ -465,6 +470,117 @@ function renamePreset(oldName: string) {
     localStorage.removeItem(recentKey(activePreset));
   }
 
+function createFullBackupCode() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const favoritesByPreset: Record<string, string[]> = {};
+    const disabledCharactersByPreset: Record<string, string[]> = {};
+    const bossesByPresetAndCharacter: Record<string, string[]> = {};
+    const bossPartyByPresetAndCharacter: Record<string, Record<string, number>> = {};
+
+    presets.forEach((presetName) => {
+      const presetFavorites = loadFavoritesByPreset(presetName);
+      favoritesByPreset[presetName] = presetFavorites;
+      disabledCharactersByPreset[presetName] = loadDisabledCharacters(presetName);
+
+      presetFavorites.forEach((characterName: string) => {
+        const bossStorageKey = `boss-${presetName}-${characterName}`;
+        const bossPartyStorageKey = `boss-party-${presetName}-${characterName}`;
+
+        const savedBosses = localStorage.getItem(bossStorageKey);
+        const savedParty = localStorage.getItem(bossPartyStorageKey);
+
+        bossesByPresetAndCharacter[`${presetName}::${characterName}`] =
+          savedBosses ? JSON.parse(savedBosses) : [];
+
+        bossPartyByPresetAndCharacter[`${presetName}::${characterName}`] =
+          savedParty ? JSON.parse(savedParty) : {};
+      });
+    });
+
+    const backupData: BackupData = {
+      version: 1,
+      presets,
+      activePreset,
+      favoritesByPreset,
+      disabledCharactersByPreset,
+      bossesByPresetAndCharacter,
+      bossPartyByPresetAndCharacter,
+    };
+
+    const backupCode = makeBackupCode(backupData);
+
+    navigator.clipboard.writeText(backupCode);
+alert("백업 코드가 클립보드에 복사됐어.");
+  } catch (error) {
+    console.error(error);
+    alert("백업 코드 생성 중 오류가 났어. 콘솔을 확인해줘.");
+  }
+}
+function restoreFullBackupCode() {
+  if (typeof window === "undefined") return;
+
+  const input = prompt("백업 코드를 붙여넣어줘.");
+  if (!input) return;
+
+  try {
+   const data = parseBackupCode(input);
+
+    if (!confirm("현재 저장된 즐겨찾기/프리셋/보스 체크를 백업 코드 내용으로 바꿀까?")) {
+      return;
+    }
+
+    savePresets(data.presets);
+    saveActivePreset(data.activePreset);
+
+    data.presets.forEach((presetName) => {
+      saveFavoritesByPreset(
+        presetName,
+        data.favoritesByPreset[presetName] ?? []
+      );
+
+      saveDisabledCharacters(
+        presetName,
+        data.disabledCharactersByPreset[presetName] ?? []
+      );
+    });
+
+    Object.entries(data.bossesByPresetAndCharacter).forEach(([key, bosses]) => {
+      const [presetName, characterName] = key.split("::");
+      if (!presetName || !characterName) return;
+
+      localStorage.setItem(
+        `boss-${presetName}-${characterName}`,
+        JSON.stringify(bosses)
+      );
+    });
+
+    Object.entries(data.bossPartyByPresetAndCharacter).forEach(
+      ([key, partyData]) => {
+        const [presetName, characterName] = key.split("::");
+        if (!presetName || !characterName) return;
+
+        localStorage.setItem(
+          `boss-party-${presetName}-${characterName}`,
+          JSON.stringify(partyData)
+        );
+      }
+    );
+
+    setPresets(data.presets);
+    setActivePreset(data.activePreset);
+    setFavorites(loadFavoritesByPreset(data.activePreset));
+    setDisabledCharacters(loadDisabledCharacters(data.activePreset));
+
+    alert("백업 코드 불러오기 완료. 화면을 새로고침할게.");
+    window.location.reload();
+} catch (error) {
+  console.error(error);
+  alert(String(error));
+}
+}
+
   function tabButton(target: Tab, label: string) {
     const active = tab === target;
 
@@ -707,7 +823,9 @@ marginLeft: 6,
   toggleCharacterEnabled={toggleCharacterEnabled}
   enableAllCharacters={enableAllCharacters}
   disableAllCharacters={disableAllCharacters}
-/>          
+  createFullBackupCode={createFullBackupCode}
+  restoreFullBackupCode={restoreFullBackupCode}
+/> 
 )}
 
 {tab === "account" && (
