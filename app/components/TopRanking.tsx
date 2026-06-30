@@ -41,16 +41,16 @@ export default function TopRanking({
             key={character.name}
             onClick={() => search(character.name)}
             style={{
-              display: "grid",
-              gridTemplateColumns: "48px 1fr auto",
-              gap: 36,
-              alignItems: "center",
-              background: "#0b0f16",
-              border: "1px solid #252d3a",
-              borderRadius: 12,
-              padding: "10px 12px",
-              cursor: "pointer",
-            }}
+  display: "grid",
+  gridTemplateColumns: "48px minmax(0,1fr) auto",
+  gap: window.innerWidth < 768 ? 10 : 36,
+  alignItems: "center",
+  background: "#0b0f16",
+  border: "1px solid #252d3a",
+  borderRadius: 12,
+  padding: "10px 12px",
+  cursor: "pointer",
+}}
           >
             <div
               style={{
@@ -70,12 +70,13 @@ export default function TopRanking({
             </div>
 
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 0,
+  }}
+>
               <Image
                 src="/icons/maple-leaf2.png"
                 alt=""
@@ -88,22 +89,27 @@ export default function TopRanking({
               />
 
               <span
-                className="maple-title"
-                style={{
-                  fontSize: 30,
-                }}
-              >
+  className="maple-title"
+  style={{
+    fontSize: window.innerWidth < 768 ? 20 : 30,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  }}
+>
                 {character.name}
               </span>
             </div>
 
             <div
-              className="maple-title"
-              style={{
-                color: "#3ee7a8",
-                fontSize: 30
-              }}
-            >
+  className="maple-title"
+  style={{
+    color: "#3ee7a8",
+    fontSize: window.innerWidth < 768 ? 20 : 30,
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+  }}
+>
               {formatNumber(character.total)}
             </div>
           </div>
