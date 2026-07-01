@@ -111,6 +111,13 @@ export default function Dashboard({
     0
   );
 
+  const yearlyPresetIncome = allFavoriteBossTotal * 52;
+
+const yearlyPresetIncomeInOku =
+  yearlyPresetIncome > 0
+    ? (yearlyPresetIncome / 100000000).toFixed(1)
+    : "0";
+
   return (
     <div>
       <h3 style={{ fontSize: 22, marginBottom: 20 }}>계정 대시보드</h3>
@@ -168,13 +175,15 @@ export default function Dashboard({
 </div>
       <div className="dashboard-grid-2" style={{ marginBottom: 18 }}>
         <SummaryPanel
-          title="💎 현재 프리셋 결정석 💎"
-          main={`${crystalPercent}%`}
-          sub={`${soldCrystalCount} / ${weeklyCrystalLimit}개 판매`}
-          desc={`남은 판매 가능: ${remainingCrystalCount}개`}
-          color={progressColor}
-          progress={crystalPercent}
-        />
+  title="💎 현재 프리셋 결정석 💎"
+  main={`${crystalPercent}%`}
+  sub={`${soldCrystalCount} / ${weeklyCrystalLimit}개 판매`}
+  desc={`남은 판매 가능: ${remainingCrystalCount}개`}
+  color={progressColor}
+  progress={crystalPercent}
+  yearlyIncome={yearlyPresetIncome}
+  yearlyIncomeInOku={yearlyPresetIncomeInOku}
+/>
 
         <div
           className="mcm-card"
@@ -558,61 +567,114 @@ export default function Dashboard({
   );
 }
 
-      function SummaryPanel({
-        title,
-        main,
-        sub,
-        desc,
-        color,
-        progress,
+function SummaryPanel({
+  title,
+  main,
+  sub,
+  desc,
+  color,
+  progress,
+  yearlyIncome,
+  yearlyIncomeInOku,
 }: {
-        title: string;
-      main: string;
-      sub: string;
-      desc: string;
-      color: string;
-      progress: number;
+  title: string;
+  main: string;
+  sub: string;
+  desc: string;
+  color: string;
+  progress: number;
+  yearlyIncome: number;
+  yearlyIncomeInOku: string;
 }) {
   return (
+    <div
+      className="mcm-card"
+      style={{
+        background: "linear-gradient(135deg, #10141c, #182232)",
+        padding: 20,
+        textAlign: "center",
+      }}
+    >
+      <div style={{ color: "#aaa", marginBottom: 6 }}>{title}</div>
+
+      <div style={{ fontSize: 38, fontWeight: "bold", color, marginBottom: 8 }}>
+        {main}
+      </div>
+
       <div
-        className="mcm-card"
         style={{
-          background: "linear-gradient(135deg, #10141c, #182232)",
-          padding: 20,
-          textAlign: "center",
+          height: 14,
+          background: "#252d3a",
+          borderRadius: 999,
+          overflow: "hidden",
+          marginBottom: 12,
         }}
       >
-        <div style={{ color: "#aaa", marginBottom: 6 }}>{title}</div>
-
-        <div style={{ fontSize: 38, fontWeight: "bold", color, marginBottom: 8 }}>
-          {main}
-        </div>
-
         <div
           style={{
-            height: 14,
-            background: "#252d3a",
+            width: `${progress}%`,
+            height: "100%",
+            background: color,
             borderRadius: 999,
-            overflow: "hidden",
-            marginBottom: 12,
+            transition: "width 0.25s ease",
+          }}
+        />
+      </div>
+
+      <div style={{ color: "#ddd", fontSize: 15, fontWeight: "bold" }}>
+        {sub}
+      </div>
+
+      <div style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{desc}</div>
+
+      <div
+        style={{
+          marginTop: 18,
+          paddingTop: 16,
+          borderTop: "1px solid rgba(255,255,255,.08)",
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(255, 209, 102, .08)",
+            border: "1px solid rgba(255, 209, 102, .22)",
+            borderRadius: 16,
+            padding: "14px 12px",
           }}
         >
           <div
             style={{
-              width: `${progress}%`,
-              height: "100%",
-              background: color,
-              borderRadius: 999,
-              transition: "width 0.25s ease",
+              color: "#ffd166",
+              fontSize: 14,
+              fontWeight: "bold",
+              marginBottom: 8,
             }}
-          />
-        </div>
+          >
+            💰 예상 연간 수익
+          </div>
 
-        <div style={{ color: "#ddd", fontSize: 15, fontWeight: "bold" }}>
-          {sub}
-        </div>
+          <div
+            style={{
+              color: "#fff",
+              fontSize: 24,
+              fontWeight: 900,
+              wordBreak: "break-all",
+            }}
+          >
+            {formatNumber(yearlyIncome)} 메소
+          </div>
 
-        <div style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{desc}</div>
+          <div
+            style={{
+              color: "#aaa",
+              fontSize: 13,
+              marginTop: 6,
+            }}
+          >
+            약 {yearlyIncomeInOku}억 메소
+          </div>
+        </div>
       </div>
-      );
+    </div>
+  );
 }
