@@ -37,15 +37,12 @@ export async function fetchCharacterData(characterName: string) {
     `/api/character?name=${encodeURIComponent(characterName)}`
   );
 
-  const data = await res.json().catch(() => null);
+const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(
-      `${characterName} 조회 실패 / status: ${res.status} / message: ${
-        data?.error ?? data?.message ?? "알 수 없음"
-      }`
-    );
-  }
+if (!res.ok || data.error) {
+  console.error("API Error:", data);
+  throw new Error(JSON.stringify(data));
+}
 
-  return data;
+return data;
 }

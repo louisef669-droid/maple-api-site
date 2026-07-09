@@ -257,9 +257,15 @@ saveCharacterCache(presetName, searchName, data);
 
       const savedParty = localStorage.getItem(bossPartyKey(searchName, presetName));
       setBossPartySize(savedParty ? JSON.parse(savedParty) : {});
-    } catch {
-      alert("조회 실패");
-    }
+    } catch (error) {
+  console.error(error);
+
+  alert(
+    error instanceof Error
+      ? error.message
+      : "조회 실패"
+  );
+}
 
     setLoading(false);
   }
