@@ -39,12 +39,17 @@ export async function GET(req: Request) {
 
   const ocidData = await ocidRes.json();
 
-  if (!ocidRes.ok || !ocidData.ocid) {
-    return NextResponse.json(
-      { error: "캐릭터 없음" },
-      { status: 404 }
-    );
-  }
+if (!ocidRes.ok || !ocidData.ocid) {
+  return NextResponse.json(
+    {
+      error: "캐릭터 없음",
+      searchedName: name,
+      ocidStatus: ocidRes.status,
+      nexonResponse: ocidData,
+    },
+    { status: 404 }
+  );
+}
 
   const ocid = ocidData.ocid;
 
