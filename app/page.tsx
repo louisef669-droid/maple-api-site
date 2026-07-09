@@ -29,6 +29,11 @@ import {
   parseBackupCode,
   type BackupData,
 } from "../lib/mcmBackup";
+import {
+  fetchCharacterData,
+  saveCharacterCache,
+} from "../lib/characterCache";
+
 
 type Tab =
   | "dashboard"
@@ -45,7 +50,11 @@ export default function Home() {
   const [name, setName] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshMode, setRefreshMode] = useState<
+  "none" | "preset" | "all"
+>("none");
   const [refreshProgress, setRefreshProgress] = useState("");
+  const [lastRefreshText, setLastRefreshText] = useState("");
   const [checkedBosses, setCheckedBosses] = useState<string[]>([]);
   const [bossPartySize, setBossPartySize] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -156,6 +165,11 @@ function disableAllCharacters() {
     const savedRecent = localStorage.getItem(recentKey(loadedActivePreset));
     setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
 
+    const savedLastRefresh = localStorage.getItem(
+  `last-full-refresh-${loadedActivePreset}`
+);
+setLastRefreshText(savedLastRefresh ?? "");
+
     const lastName = localStorage.getItem(lastNameKey(loadedActivePreset));
     if (lastName) {
       search(lastName, loadedActivePreset);
@@ -171,6 +185,11 @@ function disableAllCharacters() {
 
     const savedRecent = localStorage.getItem(recentKey(activePreset));
     setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
+
+const savedLastRefresh = localStorage.getItem(
+  `last-full-refresh-${activePreset}`
+);
+setLastRefreshText(savedLastRefresh ?? "");
 
     const lastName = localStorage.getItem(lastNameKey(activePreset));
     if (lastName) {
@@ -203,10 +222,8 @@ function disableAllCharacters() {
     setTab("dashboard");
 
     try {
-      const res = await fetch(
-        `/api/character?name=${encodeURIComponent(searchName)}`
-      );
-      const data = await res.json();
+      const data = await fetchCharacterData(searchName);
+saveCharacterCache(presetName, searchName, data);
 
       setName(searchName);
       setResult(data);
@@ -418,17 +435,169 @@ const allPresetBossTotal = presetSummaries.reduce(
   }
 
   function goHome(removeLastName = true) {
-    setName("");
-    setResult(null);
-    setLoading(false);
-    setCheckedBosses([]);
-    setBossPartySize({});
-    setTab("dashboard");
+  setName("");
+  setResult(null);
+  setLoading(false);
+  setCheckedBosses([]);
+  setBossPartySize({});
+  setTab("dashboard");
 
-    if (removeLastName) {
-      localStorage.removeItem(lastNameKey(activePreset));
+  if (removeLastName) {
+    localStorage.removeItem(lastNameKey(activePreset));
+  }
+}
+
+  async function refreshAllFavorites() {
+  if (favorites.length === 0) {
+    alert("갱신할 즐겨찾기 캐릭터가 없어.");
+    return;
+  }
+
+  if (!confirm(`즐겨찾기 ${favorites.length}명을 전체 갱신할까?`)) return;
+
+  const failed: string[] = [];
+  const updatedClasses = {
+    ...loadCharacterClasses(activePreset),
+  };
+
+  setLoading(true);
+  setRefreshMode("preset");
+  setRefreshProgress(`0 / ${favorites.length} 갱신 준비중...`);
+
+  for (let i = 0; i < favorites.length; i += 1) {
+    const characterName = favorites[i];
+
+    try {
+      setRefreshProgress(`${i + 1} / ${favorites.length} 갱신 중... ${characterName}`);
+
+      const data = await fetchCharacterData(characterName);
+      saveCharacterCache(activePreset, characterName, data);
+
+      if (data?.basic?.character_name && data?.basic?.character_class) {
+        updatedClasses[data.basic.character_name] = data.basic.character_class;
+      }
+
+      if (basic?.character_name === characterName) {
+        setResult(data);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    } catch (error) {
+      console.error(characterName, error);
+      failed.push(characterName);
     }
   }
+
+  setCharacterClasses(updatedClasses);
+  saveCharacterClasses(activePreset, updatedClasses);
+
+const nowText = new Date().toLocaleString("ko-KR", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+localStorage.setItem(`last-full-refresh-${activePreset}`, nowText);
+setLastRefreshText(nowText);
+
+  setLoading(false);
+  setRefreshMode("none");
+
+  if (failed.length > 0) {
+    setRefreshProgress(`완료: 실패 ${failed.length}명`);
+    alert(`전체 갱신 완료.\n실패: ${failed.join(", ")}`);
+  } else {
+    setRefreshProgress("전체 갱신 완료!");
+    alert("전체 갱신 완료!");
+  }
+}
+
+async function refreshAllPresets() {
+  if (!confirm("모든 프리셋의 즐겨찾기 캐릭터를 전체 갱신할까?")) return;
+
+  const failed: string[] = [];
+  let totalCount = 0;
+  let doneCount = 0;
+
+  presets.forEach((presetName) => {
+    totalCount += loadFavoritesByPreset(presetName).length;
+  });
+
+  if (totalCount === 0) {
+    alert("갱신할 즐겨찾기 캐릭터가 없어.");
+    return;
+  }
+
+  setLoading(true);
+  setRefreshMode("all");
+  setRefreshProgress(`0 / ${totalCount} 전체 프리셋 갱신 준비중...`);
+
+  for (const presetName of presets) {
+    const presetFavorites = loadFavoritesByPreset(presetName);
+    const updatedClasses = {
+      ...loadCharacterClasses(presetName),
+    };
+
+    for (const characterName of presetFavorites) {
+      doneCount += 1;
+
+      try {
+        setRefreshProgress(
+          `${doneCount} / ${totalCount} 갱신 중... ${presetName} - ${characterName}`
+        );
+
+        const data = await fetchCharacterData(characterName);
+        saveCharacterCache(presetName, characterName, data);
+
+        if (data?.basic?.character_name && data?.basic?.character_class) {
+          updatedClasses[data.basic.character_name] = data.basic.character_class;
+        }
+
+        if (
+          presetName === activePreset &&
+          basic?.character_name === characterName
+        ) {
+          setResult(data);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      } catch (error) {
+        console.error(presetName, characterName, error);
+        failed.push(`${presetName} - ${characterName}`);
+      }
+    }
+
+    saveCharacterClasses(presetName, updatedClasses);
+
+    if (presetName === activePreset) {
+      setCharacterClasses(updatedClasses);
+    }
+  }
+
+  const nowText = new Date().toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  localStorage.setItem(`last-full-refresh-${activePreset}`, nowText);
+  setLastRefreshText(nowText);
+
+  setLoading(false);
+  setRefreshMode("none");
+
+  if (failed.length > 0) {
+    setRefreshProgress(`전체 프리셋 갱신 완료: 실패 ${failed.length}명`);
+    alert(`전체 프리셋 갱신 완료.\n실패:\n${failed.join("\n")}`);
+  } else {
+    setRefreshProgress("전체 프리셋 갱신 완료!");
+    alert("전체 프리셋 갱신 완료!");
+  }
+}
 
   function addPreset() {
     const input = prompt("프리셋 이름을 입력해줘");
@@ -768,6 +937,66 @@ marginLeft: 6,
         >
           검색
         </button>
+        <button
+  onClick={refreshAllFavorites}
+  disabled={loading || favorites.length === 0}
+  style={{
+    background: loading || favorites.length === 0 ? "#333" : "#173f32",
+    color: loading || favorites.length === 0 ? "#777" : "#3ee7a8",
+    border: "1px solid #3ee7a8",
+    borderRadius: 10,
+    padding: "14px 18px",
+    fontSize: 15,
+    cursor: loading || favorites.length === 0 ? "not-allowed" : "pointer",
+    fontWeight: "bold",
+
+    display: "flex",
+alignItems: "center",
+justifyContent: "center",
+gap: 6,
+  }}
+>
+<>
+  <span className={refreshMode === "preset" ? "mcm-spin" : ""}>
+  <Image
+    src="/icons/refresh.svg"
+    alt=""
+    width={28}
+    height={28}
+  />
+</span>
+  현재 프리셋 갱신
+</>
+</button>
+<button
+  onClick={refreshAllPresets}
+  disabled={loading}
+  style={{
+  background: loading ? "#333" : "#2b1d3a",
+  color: loading ? "#777" : "#d7a7ff",
+  border: "1px solid #a855f7",
+  borderRadius: 10,
+  padding: "14px 18px",
+  fontSize: 15,
+  cursor: loading ? "not-allowed" : "pointer",
+  fontWeight: "bold",
+
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+}}
+>
+<span className={refreshMode === "all" ? "mcm-spin" : ""}>
+  <Image
+    src="/icons/refresh-purple.svg"
+    alt=""
+    width={28}
+    height={28}
+  />
+</span>
+모든 프리셋 갱신
+</button>
       </div>
 
       {recentSearches.length > 0 && (
@@ -819,7 +1048,31 @@ marginLeft: 6,
           </button>
         </div>
       )}
+{(refreshProgress || lastRefreshText) && (
+  <div
+    style={{
+      marginTop: 12,
+      background: "#10141c",
+      border: "1px solid #2a3140",
+      borderRadius: 12,
+      padding: "10px 14px",
+      color: "#cfd8e3",
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: "center",
+    }}
+  >
+    {refreshProgress && (
+      <div style={{ color: "#3ee7a8" }}>{refreshProgress}</div>
+    )}
 
+    {lastRefreshText && (
+      <div style={{ marginTop: refreshProgress ? 4 : 0, color: "#9ea7b8" }}>SS
+        마지막 전체 갱신: {lastRefreshText}
+      </div>
+    )}
+  </div>
+)}
       {loading && <p style={{ marginTop: 30 }}>조회중...</p>}
 
       {basic && (

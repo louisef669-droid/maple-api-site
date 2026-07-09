@@ -315,3 +315,20 @@ button:focus-visible {
 .maple-bold {
   font-family: "Maplestory Bold";
 }
+
+.mcm-spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: mcm-spin 0.9s linear infinite;
+}
+
+@keyframes mcm-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
