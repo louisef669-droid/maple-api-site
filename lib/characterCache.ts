@@ -37,12 +37,17 @@ export async function fetchCharacterData(characterName: string) {
     `/api/character?name=${encodeURIComponent(characterName)}`
   );
 
-const data = await res.json();
+  const data = await res.json();
 
-if (!res.ok || data.error) {
-  console.error("API Error:", data);
-  throw new Error(JSON.stringify(data));
-}
+  if (!res.ok || data?.error || !data?.basic) {
+    throw new Error(
+      JSON.stringify({
+        status: res.status,
+        characterName,
+        data,
+      })
+    );
+  }
 
-return data;
+  return data;
 }
