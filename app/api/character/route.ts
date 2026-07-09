@@ -25,7 +25,7 @@ export async function GET(req: Request) {
       { status: 400 }
     );
   }
-
+console.log("MCM API VERSION 2026-07-10-TEST");
   const headers = {
     "x-nxopen-api-key": process.env.NEXON_API_KEY!,
   };
