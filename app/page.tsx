@@ -31,7 +31,6 @@ import {
 } from "../lib/mcmBackup";
 import {
   fetchCharacterData,
-  saveCharacterCache,
 } from "../lib/characterCache";
 
 
@@ -223,7 +222,6 @@ setLastRefreshText(savedLastRefresh ?? "");
 
     try {
       const data = await fetchCharacterData(searchName);
-saveCharacterCache(presetName, searchName, data);
 
       setName(searchName);
       setResult(data);
@@ -477,7 +475,6 @@ const allPresetBossTotal = presetSummaries.reduce(
       setRefreshProgress(`${i + 1} / ${favorites.length} 갱신 중... ${characterName}`);
 
       const data = await fetchCharacterData(characterName);
-      saveCharacterCache(activePreset, characterName, data);
 
       if (data?.basic?.character_name && data?.basic?.character_class) {
         updatedClasses[data.basic.character_name] = data.basic.character_class;
@@ -555,7 +552,6 @@ async function refreshAllPresets() {
         );
 
         const data = await fetchCharacterData(characterName);
-        saveCharacterCache(presetName, characterName, data);
 
         if (data?.basic?.character_name && data?.basic?.character_class) {
           updatedClasses[data.basic.character_name] = data.basic.character_class;
