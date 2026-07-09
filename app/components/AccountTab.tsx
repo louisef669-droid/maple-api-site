@@ -21,6 +21,7 @@ type AccountTabProps = {
   activePreset: string;
   setActivePreset: (name: string) => void;
   allPresetBossTotal: number;
+  characterClasses?: Record<string, string>;
 };
 
 export default function AccountTab({
@@ -34,6 +35,7 @@ export default function AccountTab({
   presetSummaries = [],
   activePreset,
   setActivePreset,
+  characterClasses = {},
   allPresetBossTotal,
 }: AccountTabProps) {
   const totalIncome = favorites.reduce(
@@ -132,70 +134,185 @@ export default function AccountTab({
         </div>
       </div>
 
-      <table
+      <div
         style={{
-          width: "100%",
-          borderCollapse: "collapse",
           background: "#10141c",
+          border: "1px solid #2a3140",
           borderRadius: 12,
           overflow: "hidden",
         }}
       >
-        <thead>
-          <tr style={{ background: "#1d2330" }}>
-            <th style={th}>순서</th>
-            <th style={th}>캐릭터</th>
-            <th style={th}>결정석</th>
-            <th style={th}>주간 수익</th>
-            <th style={th}>관리</th>
-          </tr>
-        </thead>
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "70px 2.8fr 1fr 1.6fr 170px",
+    background: "#1d2330",
+    color: "#aaa",
+    fontWeight: 900,
+    padding: "12px 14px",
+    alignItems: "center",
+  }}
+>
+  <div style={{ textAlign: "center" }}>순서</div>
 
-        <tbody>
-          {favorites.map((name, index) => (
-            <tr
-              key={name}
-              style={{
-                background: name === currentCharacter ? "#173f32" : "transparent",
-              }}
-            >
-              <td style={td}>{index + 1}</td>
-              <td style={td}>🍁 {name}</td>
-              <td style={td}>{getCharacterBossCount(name)} / 12</td>
-              <td style={td}>{formatNumber(getCharacterBossTotal(name))}</td>
+  <div
+    style={{
+      paddingLeft: 12,
+    }}
+  >
+    캐릭터
+  </div>
 
-              <td style={td}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <button
-                    onClick={() => moveFavorite(name, "up")}
-                    disabled={index === 0}
-                    style={buttonStyle(index === 0)}
-                  >
-                    ▲
-                  </button>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+    }}
+  >
+    결정석
+  </div>
 
-                  <button
-                    onClick={() => moveFavorite(name, "down")}
-                    disabled={index === favorites.length - 1}
-                    style={buttonStyle(index === favorites.length - 1)}
-                  >
-                    ▼
-                  </button>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      paddingLeft: 8,
+    }}
+  >
+    주간 수익
+  </div>
 
-                  <button onClick={() => search(name)} style={orangeButton}>
-                    조회
-                  </button>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+    }}
+  >
+    관리
+  </div>
+</div>
+        {favorites.map((name, index) => (
+          <div
+            key={name}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "70px 2.8fr 1fr 1.6fr 170px",
+              padding: "14px 14px",
+              alignItems: "center",
+              borderTop: "1px solid #2a3140",
+              background: name === currentCharacter ? "#173f32" : "transparent",
+            }}
+          >
+            <div style={{ textAlign: "center", fontWeight: 900 }}>
+              {index + 1}
+            </div>
 
-                  <button onClick={() => removeFavorite(name)} style={grayButton}>
-                    삭제
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            <div>
+              <div
+  style={{
+    paddingLeft: 12,
+  }}
+>
+  <div
+    style={{
+      fontWeight: 900,
+      fontSize: 17,
+      lineHeight: 1.1,
+    }}
+  >
+    🍁 {name}
+  </div>
 
+  <div
+    style={{
+      color: "#8fb4ff",
+      fontSize: 12,
+      fontWeight: 700,
+      marginTop: 2,
+    }}
+  >
+    {characterClasses[name]
+      ? `(${characterClasses[name]})`
+      : "(직업 정보 없음)"}
+  </div>
+</div>
+            </div>
+
+            <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    transform: "translateX(-6px)",
+    fontWeight: 900,
+  }}
+>
+  {getCharacterBossCount(name)} / 12
+</div>
+
+            <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingLeft: 8,
+    whiteSpace: "nowrap",
+    fontWeight: 900,
+    fontSize: 17,
+  }}
+>
+              {formatNumber(getCharacterBossTotal(name))}
+            </div>
+
+            <div
+  style={{
+    display: "flex",
+    gap: 6,
+    justifyContent: "flex-end",
+    paddingRight: 6,
+    alignItems: "center",
+    flexWrap: "nowrap",
+  }}
+>
+              <button
+                onClick={() => moveFavorite(name, "up")}
+                disabled={index === 0}
+                style={buttonStyle(index === 0)}
+              >
+                ↑
+              </button>
+
+              <button
+                onClick={() => moveFavorite(name, "down")}
+                disabled={index === favorites.length - 1}
+                style={buttonStyle(index === favorites.length - 1)}
+              >
+                ↓
+              </button>
+
+              <button onClick={() => search(name)} style={orangeButton}>
+                조회
+              </button>
+
+              <button
+  onClick={() => removeFavorite(name)}
+  style={{
+    ...grayButton,
+    width: 36,
+    height: 36,
+    padding: 0,
+    fontSize: 18,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+  title="삭제"
+>
+  🗑
+</button>
+            </div>
+          </div>
+        ))}
+      </div>
       {favorites.length === 0 && (
         <div style={{ marginTop: 18, color: "#aaa" }}>
           현재 프리셋에 등록된 캐릭터가 없어.
@@ -205,37 +322,36 @@ export default function AccountTab({
   );
 }
 
-const th: React.CSSProperties = {
-  padding: 12,
-  color: "#aaa",
-  textAlign: "left",
-};
-
-const td: React.CSSProperties = {
-  padding: 12,
-  borderTop: "1px solid #2a3140",
-};
-
 function buttonStyle(disabled: boolean): React.CSSProperties {
   return {
-    background: disabled ? "#222" : "#202635",
-    color: disabled ? "#777" : "white",
-    border: "1px solid #444",
-    borderRadius: 8,
-    padding: "6px 9px",
+    width: 36,
+    height: 36,
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: disabled ? "#1a1f29" : "#232b39",
+    color: disabled ? "#555" : "#ffffff",
+    border: disabled
+      ? "1px solid #2b3240"
+      : "1px solid #3b465b",
+    borderRadius: 12,
     cursor: disabled ? "not-allowed" : "pointer",
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: 900,
+    transition: "all .15s ease",
   };
 }
-
 const orangeButton: React.CSSProperties = {
   background: "#ff7a00",
   color: "white",
   border: "none",
-  borderRadius: 8,
-  padding: "6px 10px",
+  borderRadius: 10,
+  height: 36,
+  padding: "0 12px",
   cursor: "pointer",
-  fontWeight: "bold",
+  fontWeight: 800,
+  fontSize: 13,
 };
 
 const grayButton: React.CSSProperties = {

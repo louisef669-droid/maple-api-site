@@ -53,6 +53,7 @@ export default function Home() {
   const [presets, setPresets] = useState<string[]>(DEFAULT_PRESETS);
   const [activePreset, setActivePreset] = useState(DEFAULT_PRESETS[0]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [characterClasses, setCharacterClasses] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<Tab>("dashboard");
 
   const basic = result?.basic;
@@ -74,6 +75,26 @@ export default function Home() {
   function recentKey(presetName = activePreset) {
     return `recent-searches-${presetName}`;
   }
+
+  function characterClassKey(presetName = activePreset) {
+  return `character-classes-${presetName}`;
+}
+
+function loadCharacterClasses(presetName = activePreset) {
+  if (typeof window === "undefined") return {};
+
+  const saved = localStorage.getItem(characterClassKey(presetName));
+  return saved ? JSON.parse(saved) : {};
+}
+
+function saveCharacterClasses(
+  presetName: string,
+  classes: Record<string, string>
+) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(characterClassKey(presetName), JSON.stringify(classes));
+}
 
 function disabledCharactersKey(presetName = activePreset) {
   return `disabled-characters-${presetName}`;
@@ -130,6 +151,7 @@ function disableAllCharacters() {
 
     const savedFavorites = loadFavoritesByPreset(loadedActivePreset);
     setFavorites(savedFavorites);
+    setCharacterClasses(loadCharacterClasses(loadedActivePreset));
 
     const savedRecent = localStorage.getItem(recentKey(loadedActivePreset));
     setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
@@ -145,6 +167,7 @@ function disableAllCharacters() {
 
     setFavorites(loadFavoritesByPreset(activePreset));
     setDisabledCharacters(loadDisabledCharacters(activePreset));
+    setCharacterClasses(loadCharacterClasses(activePreset));
 
     const savedRecent = localStorage.getItem(recentKey(activePreset));
     setRecentSearches(savedRecent ? JSON.parse(savedRecent) : []);
@@ -187,6 +210,17 @@ function disableAllCharacters() {
 
       setName(searchName);
       setResult(data);
+      if (data?.basic?.character_name && data?.basic?.character_class) {
+  const savedClasses = loadCharacterClasses(presetName);
+
+  const updatedClasses = {
+    ...savedClasses,
+    [data.basic.character_name]: data.basic.character_class,
+  };
+
+  setCharacterClasses(updatedClasses);
+  saveCharacterClasses(presetName, updatedClasses);
+}
 
       localStorage.setItem(lastNameKey(presetName), searchName);
 
@@ -835,6 +869,7 @@ marginLeft: 6,
     getCharacterBossTotal={getCharacterBossTotal}
     getCharacterBossCount={getCharacterBossCount}
     search={search}
+    characterClasses={characterClasses}
     removeFavorite={removeFavorite}
     moveFavorite={moveFavorite}
     presetSummaries={presetSummaries}
