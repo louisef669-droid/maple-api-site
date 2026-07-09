@@ -481,7 +481,7 @@ const allPresetBossTotal = presetSummaries.reduce(
         setResult(data);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, 900));
     } catch (error) {
       console.error(characterName, error);
       failed.push(characterName);
@@ -562,7 +562,7 @@ async function refreshAllPresets() {
           setResult(data);
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 900));
       } catch (error) {
         console.error(presetName, characterName, error);
         failed.push(`${presetName} - ${characterName}`);
