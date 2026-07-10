@@ -1112,6 +1112,7 @@ gap: 6,
   currentBossTotal={currentBossTotal}
   favorites={favorites}
   allFavoriteBossTotal={allFavoriteBossTotal}
+  allPresetBossTotal={allPresetBossTotal}
   presetSummaries={presetSummaries}
   getCharacterBossTotal={getCharacterBossTotal}
   getCharacterBossCount={getCharacterBossCount}
