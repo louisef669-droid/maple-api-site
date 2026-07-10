@@ -1,9 +1,10 @@
 "use client";
 
 import { formatNumber } from "../../lib/format";
+import type { UnionData } from "../../lib/characterTypes";
 
 type UnionTabProps = {
-  union: any;
+  union?: UnionData | null;
 };
 
 export default function UnionTab({ union }: UnionTabProps) {

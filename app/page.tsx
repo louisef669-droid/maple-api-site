@@ -32,6 +32,7 @@ import {
 import {
   fetchCharacterData,
 } from "../lib/characterCache";
+import type { CharacterData } from "../lib/characterTypes";
 
 
 type Tab =
@@ -47,7 +48,7 @@ type Tab =
 
 export default function Home() {
   const [name, setName] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<CharacterData | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshMode, setRefreshMode] = useState<
   "none" | "preset" | "all"
@@ -121,10 +122,6 @@ function saveDisabledCharacters(presetName: string, disabled: string[]) {
   localStorage.setItem(disabledCharactersKey(presetName), JSON.stringify(disabled));
 }
 
-function isCharacterEnabled(characterName: string) {
-  return !disabledCharacters.includes(characterName);
-}
-
 function toggleCharacterEnabled(characterName: string) {
   const updated = disabledCharacters.includes(characterName)
     ? disabledCharacters.filter((x) => x !== characterName)
@@ -151,6 +148,8 @@ function disableAllCharacters() {
   }
 
   useEffect(() => {
+    // This effect hydrates client-only state from localStorage after mounting.
+    /* eslint-disable react-hooks/set-state-in-effect */
     const loadedPresets = loadPresets();
     const loadedActivePreset = loadActivePreset(loadedPresets);
 
@@ -173,9 +172,14 @@ setLastRefreshText(savedLastRefresh ?? "");
     if (lastName) {
       search(lastName, loadedActivePreset);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // Storage key helpers intentionally use the preset loaded in this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    // Switching presets replaces the view state with that preset's stored state.
+    /* eslint-disable react-hooks/set-state-in-effect */
     saveActivePreset(activePreset);
 
     setFavorites(loadFavoritesByPreset(activePreset));
@@ -196,6 +200,9 @@ setLastRefreshText(savedLastRefresh ?? "");
     } else {
       goHome(false);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // activePreset is the sole trigger; helper functions read that same snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePreset]);
 
   useEffect(() => {
@@ -210,6 +217,8 @@ setLastRefreshText(savedLastRefresh ?? "");
       bossPartyKey(basic.character_name),
       JSON.stringify(bossPartySize)
     );
+    // Key helpers derive their values from activePreset, which is listed below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkedBosses, bossPartySize, basic?.character_name, activePreset]);
 
   async function search(targetName?: string, presetName = activePreset) {
@@ -269,7 +278,7 @@ setLastRefreshText(savedLastRefresh ?? "");
   }
 
   function getStat(statName: string) {
-    return stats.find((s: any) => s.stat_name === statName)?.stat_value ?? "-";
+    return stats.find((stat) => stat.stat_name === statName)?.stat_value ?? "-";
   }
 
   function getCharacterBossTotal(characterName: string) {
@@ -1102,8 +1111,7 @@ gap: 6,
   characterName={basic.character_name}
   currentBossTotal={currentBossTotal}
   favorites={favorites}
-  allFavoriteBossTotal={allPresetBossTotal}
-  allPresetBossTotal={allPresetBossTotal}
+  allFavoriteBossTotal={allFavoriteBossTotal}
   presetSummaries={presetSummaries}
   getCharacterBossTotal={getCharacterBossTotal}
   getCharacterBossCount={getCharacterBossCount}

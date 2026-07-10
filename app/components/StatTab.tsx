@@ -1,12 +1,13 @@
 "use client";
 
 import { formatNumber } from "../../lib/format";
+import type { StatValue } from "../../lib/characterTypes";
 
 type StatTabProps = {
-  getStat: (statName: string) => any;
+  getStat: (statName: string) => StatValue;
 };
 
-function safeNumber(value: any) {
+function safeNumber(value: StatValue | null | undefined) {
   if (value === undefined || value === null || value === "-") return "-";
   return formatNumber(value);
 }

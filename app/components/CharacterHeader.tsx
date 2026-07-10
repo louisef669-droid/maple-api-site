@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { formatNumber } from "../../lib/format";
+import type { CharacterBasic } from "../../lib/characterTypes";
 
 type Tab =
   | "dashboard"
@@ -14,7 +16,7 @@ type Tab =
   | "hexa";
 
 type CharacterHeaderProps = {
-  basic: any;
+  basic: CharacterBasic;
   saveFavorite: () => void;
   tabButton: (target: Tab, label: string) => React.ReactNode;
 };
@@ -57,9 +59,12 @@ export default function CharacterHeader({
     flexShrink: 0,
   }}
 >
- <img
+ <Image
   src={basic.character_image}
+  alt={`${basic.character_name} 캐릭터 이미지`}
   width={300}
+  height={300}
+  unoptimized
   style={{
     transform: "scale(1.8)",
     pointerEvents: "none",

@@ -4,7 +4,6 @@ import { formatNumber } from "../../lib/format";
 import Image from "next/image";
 import Card from "./Card";
 import TopRanking from "./TopRanking";
-import { useState } from "react";
 
 
 type PresetSummary = {
@@ -19,7 +18,6 @@ type DashboardProps = {
   currentBossTotal: number;
   favorites: string[];
   allFavoriteBossTotal: number;
-  allPresetBossTotal: number;
   presetSummaries: PresetSummary[];
   getCharacterBossTotal: (characterName: string) => number;
   getCharacterBossCount: (characterName: string) => number;
@@ -37,7 +35,6 @@ export default function Dashboard({
   currentBossTotal,
   favorites,
   allFavoriteBossTotal,
-  allPresetBossTotal,
   presetSummaries = [],
   getCharacterBossTotal,
   getCharacterBossCount,
@@ -78,11 +75,6 @@ export default function Dashboard({
       : crystalPercent >= 60
         ? "#ffd166"
         : "#3ee7a8";
-
-  const averageIncome =
-    favorites.length > 0
-      ? Math.floor(allFavoriteBossTotal / favorites.length)
-      : 0;
 
   const topCharacter =
     enabledFavorites.length > 0

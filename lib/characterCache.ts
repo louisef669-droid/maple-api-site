@@ -1,5 +1,7 @@
+import type { CharacterData } from "./characterTypes";
+
 export type CharacterCacheItem = {
-  data: any;
+  data: CharacterData;
   updatedAt: number;
 };
 
@@ -10,7 +12,7 @@ export function getCharacterCacheKey(presetName: string, characterName: string) 
 export function saveCharacterCache(
   presetName: string,
   characterName: string,
-  data: any
+  data: CharacterData
 ) {
   localStorage.setItem(
     getCharacterCacheKey(presetName, characterName),
@@ -32,12 +34,14 @@ export function loadCharacterCache(
   return saved ? JSON.parse(saved) : null;
 }
 
-export async function fetchCharacterData(characterName: string) {
+export async function fetchCharacterData(
+  characterName: string
+): Promise<CharacterData> {
   const res = await fetch(
     `/api/character?name=${encodeURIComponent(characterName)}`
   );
 
-  const data = await res.json();
+  const data = (await res.json()) as Partial<CharacterData> & { error?: string };
 
   if (!res.ok || data?.error || !data?.basic) {
     throw new Error(
@@ -49,5 +53,5 @@ export async function fetchCharacterData(characterName: string) {
     );
   }
 
-  return data;
+  return data as CharacterData;
 }

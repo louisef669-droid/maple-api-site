@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import MapleLeaf from "./MapleLeaf";
 
 type Character = {
   name: string;

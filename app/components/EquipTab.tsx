@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import type { EquipmentItem } from "../../lib/characterTypes";
+
 type EquipTabProps = {
-  equips: any[];
+  equips: EquipmentItem[];
 };
 
 function gradeColor(grade: string) {
@@ -12,20 +15,20 @@ function gradeColor(grade: string) {
   return "#cccccc";
 }
 
-function potentialLines(item: any) {
+function potentialLines(item: EquipmentItem) {
   return [
     item.potential_option_1,
     item.potential_option_2,
     item.potential_option_3,
-  ].filter(Boolean);
+  ].filter((line): line is string => Boolean(line));
 }
 
-function additionalLines(item: any) {
+function additionalLines(item: EquipmentItem) {
   return [
     item.additional_potential_option_1,
     item.additional_potential_option_2,
     item.additional_potential_option_3,
-  ].filter(Boolean);
+  ].filter((line): line is string => Boolean(line));
 }
 
 export default function EquipTab({ equips }: EquipTabProps) {
@@ -42,7 +45,7 @@ export default function EquipTab({ equips }: EquipTabProps) {
           textAlign: "left",
         }}
       >
-        {equips.map((item: any) => {
+        {equips.map((item) => {
           const potentials = potentialLines(item);
           const addPotentials = additionalLines(item);
 
@@ -59,11 +62,12 @@ export default function EquipTab({ equips }: EquipTabProps) {
             >
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 {item.item_icon && (
-                  <img
+                  <Image
                     src={item.item_icon}
                     alt={item.item_name}
                     width={50}
                     height={50}
+                    unoptimized
                     style={{
                       background: "#222",
                       borderRadius: 8,

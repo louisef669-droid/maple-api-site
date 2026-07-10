@@ -1,7 +1,9 @@
 "use client";
 
+import type { ArtifactData } from "../../lib/characterTypes";
+
 type ArtifactTabProps = {
-  artifact: any;
+  artifact?: ArtifactData | null;
 };
 
 export default function ArtifactTab({ artifact }: ArtifactTabProps) {
@@ -43,7 +45,7 @@ export default function ArtifactTab({ artifact }: ArtifactTabProps) {
         }}
       >
         {(artifact?.union_artifact_effect ?? []).map(
-          (effect: any, index: number) => (
+          (effect, index) => (
             <div
               key={index}
               style={{
@@ -87,7 +89,7 @@ export default function ArtifactTab({ artifact }: ArtifactTabProps) {
         }}
       >
         {(artifact?.union_artifact_crystal ?? []).map(
-          (crystal: any, index: number) => (
+          (crystal, index) => (
             <div
               key={index}
               style={{

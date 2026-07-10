@@ -1,10 +1,11 @@
 "use client";
 
 import bossRequirements from "../../data/bossRequirement.json";
+import type { StatValue } from "../../lib/characterTypes";
 
 type BossRequirementTabProps = {
   level: number;
-  getStat: (statName: string) => any;
+  getStat: (statName: string) => StatValue;
 };
 
 type BossReq = {
@@ -129,7 +130,7 @@ return {
               usingAuthentic ? "authentic" : "arcane"
             );
             const maxForce =
-  (boss as any).maxForce ??
+  boss.maxForce ??
   (usingAuthentic
     ? Math.ceil(requiredForce * 1.25)
     : Math.ceil(requiredForce * 1.5));

@@ -1,7 +1,9 @@
 "use client";
 
+import type { HexaCore } from "../../lib/characterTypes";
+
 type HexaTabProps = {
-  hexaCores: any[];
+  hexaCores: HexaCore[];
 };
 
 export default function HexaTab({ hexaCores }: HexaTabProps) {
@@ -33,7 +35,7 @@ export default function HexaTab({ hexaCores }: HexaTabProps) {
           </div>
         )}
 
-        {hexaCores.map((core: any, index: number) => (
+        {hexaCores.map((core, index) => (
           <div
             key={index}
             style={{
