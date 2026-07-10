@@ -18,6 +18,7 @@ type DashboardProps = {
   currentBossTotal: number;
   favorites: string[];
   allFavoriteBossTotal: number;
+  allPresetBossTotal: number;
   presetSummaries: PresetSummary[];
   getCharacterBossTotal: (characterName: string) => number;
   getCharacterBossCount: (characterName: string) => number;
@@ -35,6 +36,7 @@ export default function Dashboard({
   currentBossTotal,
   favorites,
   allFavoriteBossTotal,
+  allPresetBossTotal,
   presetSummaries = [],
   getCharacterBossTotal,
   getCharacterBossCount,
@@ -198,7 +200,7 @@ const yearlyPresetIncomeInOku =
               wordBreak: "break-all",
             }}
           >
-            {formatNumber(allFavoriteBossTotal)} 메소
+            {formatNumber(allPresetBossTotal)} 메소
           </div>
 
           <div style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>
