@@ -34,7 +34,7 @@
   { "name": "노말 진힐라", "price": 71200000, "difficulty": "노말", "group": "진힐라", "weekly": true },
   { "name": "하드 진힐라", "price": 106000000, "difficulty": "하드", "group": "진힐라", "weekly": true },
 
-  { "name": "검은 마법사", "price": 700000000, "difficulty": "하드", "group": "검세칼카", "weekly": true },
+  { "name": "검은 마법사", "price": 665000000, "difficulty": "하드", "group": "검세칼카", "weekly": false },
 
   { "name": "노말 세렌", "price": 239000000, "difficulty": "노말", "group": "세렌", "weekly": true },
   { "name": "하드 세렌", "price": 356000000, "difficulty": "하드", "group": "검세칼카", "weekly": true },

@@ -13,7 +13,8 @@ type Tab =
   | "equip"
   | "union"
   | "artifact"
-  | "hexa";
+  | "hexa"
+  | "symbol";
 
 type CharacterHeaderProps = {
   basic: CharacterBasic;
@@ -139,6 +140,7 @@ export default function CharacterHeader({
 {tabButton("equip", "장비")}
 {tabButton("union", "유니온")}
 {tabButton("artifact", "아티팩트")}
+{tabButton("symbol", "심볼")}
 {tabButton("hexa", "헥사")}
 {tabButton("stat", "스탯")}
       </div>

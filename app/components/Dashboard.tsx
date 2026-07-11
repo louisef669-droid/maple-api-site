@@ -4,11 +4,17 @@ import { formatNumber } from "../../lib/format";
 import Image from "next/image";
 import Card from "./Card";
 import TopRanking from "./TopRanking";
+import type { SymbolItem } from "../../lib/characterTypes";
+import {
+  getSymbolRemainingToMax,
+  isSymbolMaxLevel,
+} from "../../lib/symbolProgress";
 
 
 type PresetSummary = {
   name: string;
   total: number;
+  monthlyTotal: number;
   count: number;
   characterCount: number;
 };
@@ -19,6 +25,8 @@ type DashboardProps = {
   favorites: string[];
   allFavoriteBossTotal: number;
   allPresetBossTotal: number;
+  allFavoriteMonthlyBossTotal: number;
+  allPresetMonthlyBossTotal: number;
   presetSummaries: PresetSummary[];
   getCharacterBossTotal: (characterName: string) => number;
   getCharacterBossCount: (characterName: string) => number;
@@ -29,6 +37,7 @@ type DashboardProps = {
   disableAllCharacters: () => void;
   createFullBackupCode: () => void;
   restoreFullBackupCode: () => void;
+  symbols: SymbolItem[];
 };
 
 export default function Dashboard({
@@ -37,6 +46,8 @@ export default function Dashboard({
   favorites,
   allFavoriteBossTotal,
   allPresetBossTotal,
+  allFavoriteMonthlyBossTotal,
+  allPresetMonthlyBossTotal,
   presetSummaries = [],
   getCharacterBossTotal,
   getCharacterBossCount,
@@ -47,6 +58,7 @@ export default function Dashboard({
   toggleCharacterEnabled,
   createFullBackupCode,
   restoreFullBackupCode,
+  symbols,
 }: DashboardProps) {
   const weeklyCrystalLimit = 90;
 
@@ -105,12 +117,26 @@ export default function Dashboard({
     0
   );
 
-  const yearlyPresetIncome = allFavoriteBossTotal * 52;
+  const yearlyPresetIncome =
+    allFavoriteBossTotal * 52 + allFavoriteMonthlyBossTotal * 12;
 
 const yearlyPresetIncomeInOku =
   yearlyPresetIncome > 0
     ? (yearlyPresetIncome / 100000000).toFixed(1)
     : "0";
+
+  const allYearlyIncome =
+    allPresetBossTotal * 52 + allPresetMonthlyBossTotal * 12;
+  const allYearlyIncomeInOku =
+    allYearlyIncome > 0
+      ? (allYearlyIncome / 100000000).toFixed(1)
+      : "0";
+
+  const growingSymbols = symbols.filter((symbol) => !isSymbolMaxLevel(symbol));
+  const remainingSymbolCount = growingSymbols.reduce(
+    (sum, symbol) => sum + getSymbolRemainingToMax(symbol),
+    0
+  );
 
   return (
     <div>
@@ -177,6 +203,8 @@ const yearlyPresetIncomeInOku =
   progress={crystalPercent}
   yearlyIncome={yearlyPresetIncome}
   yearlyIncomeInOku={yearlyPresetIncomeInOku}
+  allYearlyIncome={allYearlyIncome}
+  allYearlyIncomeInOku={allYearlyIncomeInOku}
 />
 
         <div
@@ -201,6 +229,10 @@ const yearlyPresetIncomeInOku =
             }}
           >
             {formatNumber(allPresetBossTotal)} 메소
+          </div>
+
+          <div style={{ color: "#66aaff", fontSize: 14, marginTop: 6 }}>
+            월간 보스 {formatNumber(allPresetMonthlyBossTotal)} 메소
           </div>
 
           <div style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>
@@ -315,6 +347,14 @@ const yearlyPresetIncomeInOku =
     title="현재 프리셋 총 수익"
     value={`${formatNumber(allFavoriteBossTotal)} 메소`}
     blue
+  />
+
+  <Card
+    title="심볼 성장 현황"
+    value={`성장 중 ${growingSymbols.length}개 · ${formatNumber(
+      remainingSymbolCount
+    )}개 남음`}
+    purple
   />
 
   <Card
@@ -570,6 +610,8 @@ function SummaryPanel({
   progress,
   yearlyIncome,
   yearlyIncomeInOku,
+  allYearlyIncome,
+  allYearlyIncomeInOku,
 }: {
   title: string;
   main: string;
@@ -579,6 +621,8 @@ function SummaryPanel({
   progress: number;
   yearlyIncome: number;
   yearlyIncomeInOku: string;
+  allYearlyIncome: number;
+  allYearlyIncomeInOku: string;
 }) {
   return (
     <div
@@ -666,6 +710,42 @@ function SummaryPanel({
             }}
           >
             약 {yearlyIncomeInOku}억 메소
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            background: "rgba(102, 170, 255, .08)",
+            border: "1px solid rgba(102, 170, 255, .22)",
+            borderRadius: 16,
+            padding: "14px 12px",
+          }}
+        >
+          <div
+            style={{
+              color: "#66aaff",
+              fontSize: 14,
+              fontWeight: "bold",
+              marginBottom: 8,
+            }}
+          >
+            💎 전체 예상 연간 수익
+          </div>
+
+          <div
+            style={{
+              color: "#fff",
+              fontSize: 24,
+              fontWeight: 900,
+              wordBreak: "break-all",
+            }}
+          >
+            {formatNumber(allYearlyIncome)} 메소
+          </div>
+
+          <div style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>
+            약 {allYearlyIncomeInOku}억 메소
           </div>
         </div>
       </div>

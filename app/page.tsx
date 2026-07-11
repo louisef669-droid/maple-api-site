@@ -14,6 +14,7 @@ import ArtifactTab from "./components/ArtifactTab";
 import HexaTab from "./components/HexaTab";
 import AccountTab from "./components/AccountTab";
 import PresetBar from "./components/PresetBar";
+import SymbolTab from "./components/SymbolTab";
 import {
   DEFAULT_PRESETS,
   loadPresets,
@@ -44,7 +45,8 @@ type Tab =
   | "equip"
   | "union"
   | "artifact"
-  | "hexa";
+  | "hexa"
+  | "symbol";
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -72,6 +74,7 @@ export default function Home() {
   const artifact = result?.artifact;
   const hexa = result?.hexa;
   const hexaCores = hexa?.character_hexa_core_equipment ?? [];
+  const symbols = result?.symbols?.symbol ?? [];
 
   function bossKey(characterName: string, presetName = activePreset) {
     return `boss-${presetName}-${characterName}`;
@@ -290,7 +293,22 @@ setLastRefreshText(savedLastRefresh ?? "");
 
     return bosses.reduce((sum: number, bossName: string) => {
       const boss = bossList.find((b) => b.name === bossName);
-      if (!boss) return sum;
+      if (!boss || boss.weekly === false) return sum;
+
+      const party = partyData[bossName] ?? 1;
+      return sum + Math.floor(boss.price / party);
+    }, 0);
+  }
+
+  function getCharacterMonthlyBossTotal(characterName: string) {
+    const saved = localStorage.getItem(bossKey(characterName));
+    const bosses = saved ? JSON.parse(saved) : [];
+    const savedParty = localStorage.getItem(bossPartyKey(characterName));
+    const partyData = savedParty ? JSON.parse(savedParty) : {};
+
+    return bosses.reduce((sum: number, bossName: string) => {
+      const boss = bossList.find((item) => item.name === bossName);
+      if (!boss || boss.weekly !== false) return sum;
 
       const party = partyData[bossName] ?? 1;
       return sum + Math.floor(boss.price / party);
@@ -313,23 +331,56 @@ setLastRefreshText(savedLastRefresh ?? "");
 
   return bosses.reduce((sum: number, bossName: string) => {
     const boss = bossList.find((b) => b.name === bossName);
-    if (!boss) return sum;
+    if (!boss || boss.weekly === false) return sum;
 
     const party = partyData[bossName] ?? 1;
     return sum + Math.floor(boss.price / party);
   }, 0);
 }
 
+  function getCharacterMonthlyBossTotalByPreset(
+    characterName: string,
+    presetName: string
+  ) {
+    if (typeof window === "undefined") return 0;
+
+    const saved = localStorage.getItem(`boss-${presetName}-${characterName}`);
+    const bosses = saved ? JSON.parse(saved) : [];
+    const savedParty = localStorage.getItem(
+      `boss-party-${presetName}-${characterName}`
+    );
+    const partyData = savedParty ? JSON.parse(savedParty) : {};
+
+    return bosses.reduce((sum: number, bossName: string) => {
+      const boss = bossList.find((item) => item.name === bossName);
+      if (!boss || boss.weekly !== false) return sum;
+
+      const party = partyData[bossName] ?? 1;
+      return sum + Math.floor(boss.price / party);
+    }, 0);
+  }
+
   function getCharacterBossCount(characterName: string) {
     const saved = localStorage.getItem(bossKey(characterName));
     const bosses = saved ? JSON.parse(saved) : [];
 
-    return bosses.length;
+    return bosses.filter((bossName: string) => {
+      const boss = bossList.find((item) => item.name === bossName);
+      return boss?.weekly !== false;
+    }).length;
   }
 
   const currentBossTotal = checkedBosses.reduce((sum, bossName) => {
     const boss = bossList.find((b) => b.name === bossName);
-    if (!boss) return sum;
+    if (!boss || boss.weekly === false) return sum;
+
+    const party = bossPartySize[bossName] ?? 1;
+    return sum + Math.floor(boss.price / party);
+  }, 0);
+
+  const currentMonthlyBossTotal = checkedBosses.reduce((sum, bossName) => {
+    const boss = bossList.find((item) => item.name === bossName);
+    if (!boss || boss.weekly !== false) return sum;
 
     const party = bossPartySize[bossName] ?? 1;
     return sum + Math.floor(boss.price / party);
@@ -341,6 +392,11 @@ const enabledFavorites = favorites.filter(
 
   const allFavoriteBossTotal = enabledFavorites.reduce(
     (sum, characterName) => sum + getCharacterBossTotal(characterName),
+    0
+  );
+
+  const allFavoriteMonthlyBossTotal = enabledFavorites.reduce(
+    (sum, characterName) => sum + getCharacterMonthlyBossTotal(characterName),
     0
   );
   
@@ -362,6 +418,13 @@ const presetSummaries =
           0
         );
 
+        const monthlyTotal = enabledPresetFavorites.reduce(
+          (sum: number, characterName: string) =>
+            sum +
+            getCharacterMonthlyBossTotalByPreset(characterName, presetName),
+          0
+        );
+
         const count = enabledPresetFavorites.reduce(
           (sum: number, characterName: string) => {
             const saved = localStorage.getItem(
@@ -376,6 +439,7 @@ const presetSummaries =
         return {
           name: presetName,
           total,
+          monthlyTotal,
           count,
           characterCount: enabledPresetFavorites.length,
         };
@@ -384,6 +448,11 @@ const presetSummaries =
   
 const allPresetBossTotal = presetSummaries.reduce(
   (sum, preset) => sum + preset.total,
+  0
+);
+
+const allPresetMonthlyBossTotal = presetSummaries.reduce(
+  (sum, preset) => sum + preset.monthlyTotal,
   0
 );
 
@@ -1113,6 +1182,8 @@ gap: 6,
   favorites={favorites}
   allFavoriteBossTotal={allFavoriteBossTotal}
   allPresetBossTotal={allPresetBossTotal}
+  allFavoriteMonthlyBossTotal={allFavoriteMonthlyBossTotal}
+  allPresetMonthlyBossTotal={allPresetMonthlyBossTotal}
   presetSummaries={presetSummaries}
   getCharacterBossTotal={getCharacterBossTotal}
   getCharacterBossCount={getCharacterBossCount}
@@ -1123,6 +1194,7 @@ gap: 6,
   disableAllCharacters={disableAllCharacters}
   createFullBackupCode={createFullBackupCode}
   restoreFullBackupCode={restoreFullBackupCode}
+  symbols={symbols}
 /> 
 )}
 
@@ -1154,11 +1226,14 @@ gap: 6,
 
           {tab === "boss" && (
             <BossTab
+              key={activePreset}
+              activePreset={activePreset}
               checkedBosses={checkedBosses}
               setCheckedBosses={setCheckedBosses}
               bossPartySize={bossPartySize}
               setBossPartySize={setBossPartySize}
               currentBossTotal={currentBossTotal}
+              currentMonthlyBossTotal={currentMonthlyBossTotal}
               toggleBoss={toggleBoss}
               toggleBossGroup={toggleBossGroup}
               resetBosses={resetBosses}
@@ -1170,6 +1245,10 @@ gap: 6,
           {tab === "artifact" && <ArtifactTab artifact={artifact} />}
 
           {tab === "hexa" && <HexaTab hexaCores={hexaCores} />}
+
+          {tab === "symbol" && (
+            <SymbolTab symbols={symbols} />
+          )}
 
           {tab === "equip" && <EquipTab equips={equips} />}
         </div>

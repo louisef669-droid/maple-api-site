@@ -41,7 +41,25 @@ export async function fetchCharacterData(
     `/api/character?name=${encodeURIComponent(characterName)}`
   );
 
-  const data = (await res.json()) as Partial<CharacterData> & { error?: string };
+  const responseText = await res.text();
+
+  if (!responseText.trim()) {
+    throw new Error(
+      "서버 응답이 없습니다. 로컬 서버가 실행 중인지 확인해 주세요."
+    );
+  }
+
+  let data: Partial<CharacterData> & { error?: string };
+
+  try {
+    data = JSON.parse(responseText) as Partial<CharacterData> & {
+      error?: string;
+    };
+  } catch {
+    throw new Error(
+      "서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    );
+  }
 
   if (!res.ok || data?.error || !data?.basic) {
     throw new Error(

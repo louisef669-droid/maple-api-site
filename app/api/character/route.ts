@@ -65,7 +65,7 @@ if (!ocidRes.ok || !ocidData.ocid) {
     );
   }
 
-  const [stat, equip, union, artifact, hexa] = await Promise.all([
+  const [stat, equip, union, artifact, hexa, symbols] = await Promise.all([
     safeJson(
       `https://open.api.nexon.com/maplestory/v1/character/stat?ocid=${ocid}`,
       headers
@@ -86,6 +86,10 @@ if (!ocidRes.ok || !ocidData.ocid) {
       `https://open.api.nexon.com/maplestory/v1/character/hexamatrix?ocid=${ocid}`,
       headers
     ),
+    safeJson(
+      `https://open.api.nexon.com/maplestory/v1/character/symbol-equipment?ocid=${ocid}`,
+      headers
+    ),
   ]);
 
   return NextResponse.json({
@@ -95,5 +99,6 @@ if (!ocidRes.ok || !ocidData.ocid) {
     union,
     artifact,
     hexa,
+    symbols,
   });
 }

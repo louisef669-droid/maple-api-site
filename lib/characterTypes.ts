@@ -54,6 +54,15 @@ export type HexaCore = {
   hexa_core_level: number;
 };
 
+export type SymbolItem = {
+  symbol_name: string;
+  symbol_icon: string;
+  symbol_force: string;
+  symbol_level: number;
+  symbol_growth_count: number;
+  symbol_require_growth_count: number;
+};
+
 export type CharacterData = {
   basic: CharacterBasic;
   stat?: { final_stat?: CharacterStat[] } | null;
@@ -61,6 +70,7 @@ export type CharacterData = {
   union?: UnionData | null;
   artifact?: ArtifactData | null;
   hexa?: { character_hexa_core_equipment?: HexaCore[] } | null;
+  symbols?: { symbol?: SymbolItem[] } | null;
 };
 
 export type StatValue = string | number;

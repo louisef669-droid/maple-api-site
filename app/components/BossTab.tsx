@@ -27,7 +27,12 @@ const bossOrder = [
   "칼로스", "카링", "쌀숭", "흉성", "림보",
 ];
 
-const bossGroups = [
+type BossGroup = {
+  name: string;
+  bosses: string[];
+};
+
+const defaultBossGroups: BossGroup[] = [
   { name: "카룻", bosses: ["카오스 반반", "카오스 피에르", "카오스 블러디퀸", "카오스 벨룸"] },
   { name: "스데루슬더", bosses: ["노말 스우", "노말 데미안", "이지 루시드", "노말 가엔슬", "노말 더스크"] },
   { name: "노진힐라인", bosses: ["하드 스우", "하드 데미안", "노말 가엔슬", "노말 루시드", "노말 윌", "노말 더스크", "노말 듄켈", "노말 진힐라"] },
@@ -72,27 +77,82 @@ function difficultyColor(name?: string) {
 }
 
 type BossTabProps = {
+  activePreset: string;
   checkedBosses: string[];
   setCheckedBosses: Dispatch<SetStateAction<string[]>>;
   bossPartySize: Record<string, number>;
   setBossPartySize: Dispatch<SetStateAction<Record<string, number>>>;
   currentBossTotal: number;
+  currentMonthlyBossTotal: number;
   toggleBoss: (bossName: string) => void;
   toggleBossGroup: (groupBosses: string[]) => void;
   resetBosses: () => void;
 };
 
 export default function BossTab({
+  activePreset,
   checkedBosses,
   setCheckedBosses,
   bossPartySize,
   setBossPartySize,
   currentBossTotal,
+  currentMonthlyBossTotal,
   toggleBoss,
   toggleBossGroup,
   resetBosses,
 }: BossTabProps) {
   const [selectedBossByBase, setSelectedBossByBase] = useState<Record<string, string>>({});
+  const [bossGroups, setBossGroups] = useState<BossGroup[]>(() => {
+    if (typeof window === "undefined") return defaultBossGroups;
+
+    const saved = localStorage.getItem(`boss-groups-${activePreset}`);
+    return saved ? JSON.parse(saved) : defaultBossGroups;
+  });
+  const [editingGroups, setEditingGroups] = useState(false);
+  const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
+
+  function saveBossGroups(nextGroups: BossGroup[]) {
+    setBossGroups(nextGroups);
+    localStorage.setItem(
+      `boss-groups-${activePreset}`,
+      JSON.stringify(nextGroups)
+    );
+  }
+
+  function addBossGroup() {
+    const nextGroups = [...bossGroups, { name: "새 프리셋", bosses: [] }];
+    saveBossGroups(nextGroups);
+    setEditingGroupIndex(nextGroups.length - 1);
+    setEditingGroups(true);
+  }
+
+  function updateEditingGroup(update: Partial<BossGroup>) {
+    if (editingGroupIndex === null) return;
+
+    const nextGroups = bossGroups.map((group, index) =>
+      index === editingGroupIndex ? { ...group, ...update } : group
+    );
+    saveBossGroups(nextGroups);
+  }
+
+  function toggleGroupBoss(bossName: string) {
+    if (editingGroupIndex === null) return;
+
+    const group = bossGroups[editingGroupIndex];
+    const nextBosses = group.bosses.includes(bossName)
+      ? group.bosses.filter((name) => name !== bossName)
+      : [...group.bosses, bossName];
+
+    updateEditingGroup({ bosses: nextBosses });
+  }
+
+  function removeEditingGroup() {
+    if (editingGroupIndex === null) return;
+
+    const nextGroups = bossGroups.filter((_, index) => index !== editingGroupIndex);
+    saveBossGroups(nextGroups);
+    setEditingGroupIndex(null);
+  }
 
   const bossCards = useMemo<BossCard[]>(() => {
     const map = new Map<string, BossItem[]>();
@@ -119,7 +179,15 @@ export default function BossTab({
 
   const maxBossCount = 12;
 
-  const checkedCardCount = bossCards.filter((card) =>
+  const weeklyBossCards = bossCards.filter((card) =>
+    card.variants.some((boss) => boss.weekly !== false)
+  );
+  const monthlyBossCards = bossCards.filter((card) =>
+    card.variants.every((boss) => boss.weekly === false)
+  );
+  const displayedBossCards = [...weeklyBossCards, ...monthlyBossCards];
+
+  const checkedCardCount = weeklyBossCards.filter((card) =>
     card.variants.some((boss) => checkedBosses.includes(boss.name))
   ).length;
 
@@ -199,6 +267,67 @@ export default function BossTab({
         <div style={{ fontSize: 28, fontWeight: "bold", color: "#3ee7a8" }}>
           {formatNumber(currentBossTotal)} 메소
         </div>
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: "1px solid #2a3140",
+          }}
+        >
+          <div style={{ color: "#b8c0d4", marginBottom: 6, fontSize: 14 }}>
+            현재 캐릭터 월간 보스 수익
+          </div>
+          <div style={{ fontSize: 24, fontWeight: "bold", color: "#66aaff" }}>
+            {formatNumber(currentMonthlyBossTotal)} 메소
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setEditingGroups((prev) => !prev);
+            setEditingGroupIndex(null);
+          }}
+          style={{
+            background: editingGroups ? "#663c00" : "#202635",
+            color: editingGroups ? "#ffd166" : "#ddd",
+            border: "1px solid #555",
+            borderRadius: 999,
+            padding: "8px 14px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {editingGroups ? "편집 완료" : "프리셋 편집"}
+        </button>
+
+        {editingGroups && (
+          <button
+            type="button"
+            onClick={addBossGroup}
+            style={{
+              background: "#173f32",
+              color: "#3ee7a8",
+              border: "1px solid #3ee7a8",
+              borderRadius: 999,
+              padding: "8px 14px",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            + 새 프리셋
+          </button>
+        )}
       </div>
 
       <div
@@ -206,8 +335,9 @@ export default function BossTab({
         className="notranslate mcm-chip-row"
         style={{ marginBottom: 18 }}
       >
-        {bossGroups.map((group) => {
+        {bossGroups.map((group, groupIndex) => {
           const allChecked = group.bosses.every((boss) => checkedBosses.includes(boss));
+          const editing = editingGroups && editingGroupIndex === groupIndex;
 
           return (
             <button
@@ -215,11 +345,23 @@ export default function BossTab({
               type="button"
               translate="no"
               className="notranslate"
-              onClick={() => toggleBossGroup(group.bosses)}
+              onClick={() =>
+                editingGroups
+                  ? setEditingGroupIndex(groupIndex)
+                  : toggleBossGroup(group.bosses)
+              }
               style={{
-                background: allChecked ? "#1f8f5f" : "#202635",
+                background: editing
+                  ? "#663c00"
+                  : allChecked
+                    ? "#1f8f5f"
+                    : "#202635",
                 color: "white",
-                border: allChecked ? "1px solid #3ee7a8" : "1px solid #444",
+                border: editing
+                  ? "1px solid #ffd166"
+                  : allChecked
+                    ? "1px solid #3ee7a8"
+                    : "1px solid #444",
                 borderRadius: 999,
                 padding: "8px 14px",
                 cursor: "pointer",
@@ -227,13 +369,99 @@ export default function BossTab({
               }}
             >
               <span translate="no" className="notranslate">
-                {allChecked ? "✅ " : "➕ "}
+                {editingGroups ? "✎ " : allChecked ? "✅ " : "➕ "}
                 {group.name}
               </span>
             </button>
           );
         })}
       </div>
+
+      {editingGroups && editingGroupIndex !== null && bossGroups[editingGroupIndex] && (
+        <div
+          className="mcm-card"
+          style={{ padding: 16, marginBottom: 18, textAlign: "left" }}
+        >
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              marginBottom: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              value={bossGroups[editingGroupIndex].name}
+              onChange={(event) => updateEditingGroup({ name: event.target.value })}
+              aria-label="보스 프리셋 이름"
+              style={{
+                flex: 1,
+                minWidth: 180,
+                background: "#10141c",
+                color: "white",
+                border: "1px solid #555",
+                borderRadius: 10,
+                padding: "9px 11px",
+                fontSize: 15,
+                fontWeight: "bold",
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={removeEditingGroup}
+              style={{
+                background: "#3a1f1f",
+                color: "#ff8c8c",
+                border: "1px solid #ff8c8c",
+                borderRadius: 10,
+                padding: "9px 12px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              프리셋 삭제
+            </button>
+          </div>
+
+          <div style={{ color: "#aaa", fontSize: 13, marginBottom: 10 }}>
+            이 프리셋으로 한 번에 체크할 보스를 선택하세요.
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 8,
+            }}
+          >
+            {bosses.map((boss) => {
+              const selected = bossGroups[editingGroupIndex].bosses.includes(boss.name);
+
+              return (
+                <button
+                  key={boss.name}
+                  type="button"
+                  onClick={() => toggleGroupBoss(boss.name)}
+                  style={{
+                    background: selected ? "#173f32" : "#10141c",
+                    color: selected ? "#3ee7a8" : "#bbb",
+                    border: selected ? "1px solid #3ee7a8" : "1px solid #333",
+                    borderRadius: 10,
+                    padding: "8px 10px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontWeight: selected ? "bold" : "normal",
+                  }}
+                >
+                  {selected ? "☑" : "☐"} {boss.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
@@ -252,7 +480,7 @@ export default function BossTab({
       </button>
 
       <div className="mcm-grid" style={{ textAlign: "left" }}>
-        {bossCards.map((card) => {
+        {displayedBossCards.map((card) => {
           const checkedBoss = card.variants.find((boss) => checkedBosses.includes(boss.name));
           const selectedBossName =
             checkedBoss?.name ?? selectedBossByBase[card.baseName] ?? card.variants[0].name;
@@ -264,6 +492,7 @@ export default function BossTab({
           const party = bossPartySize[selectedBoss.name] ?? 1;
           const dividedPrice = Math.floor(selectedBoss.price / party);
           const diffColor = difficultyColor(selectedBoss.difficulty ?? selectedBoss.name);
+          const isMonthly = selectedBoss.weekly === false;
 
           return (
             <div
@@ -297,6 +526,18 @@ export default function BossTab({
                     {card.baseName}
                   </span>
                 </div>
+                {isMonthly && (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      color: "#66aaff",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    월간 보스 · 주간 합계 제외
+                  </div>
+                )}
               </button>
 
               {card.variants.length > 1 ? (
