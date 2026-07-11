@@ -137,10 +137,10 @@ export default function CharacterHeader({
 {tabButton("account", "계정관리")}
 {tabButton("boss", "주간 보스")}
 {tabButton("boss-requirement", "보스 스펙")}
+{tabButton("symbol", "심볼")}
 {tabButton("equip", "장비")}
 {tabButton("union", "유니온")}
 {tabButton("artifact", "아티팩트")}
-{tabButton("symbol", "심볼")}
 {tabButton("hexa", "헥사")}
 {tabButton("stat", "스탯")}
       </div>
